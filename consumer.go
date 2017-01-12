@@ -13,7 +13,9 @@ type Consumer struct {
 
 // MessageHandler is something that can process a Message, calling Ack, Nack when appropiate for your domain
 type MessageHandler interface {
+	// Name is a description of your handler for logging purposes
 	Name() string
+	// Handle will receive messages as they come from AMQP
 	Handle(msg Message)
 }
 
