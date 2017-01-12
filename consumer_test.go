@@ -38,9 +38,9 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -57,7 +57,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	message := <-consumer
+	message := <-consumer.Messages
 
 	if string(message.Body()) != string(payload) {
 		t.Fatal("failed to publish")
@@ -85,9 +85,9 @@ func TestDLQ(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -121,7 +121,7 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	message := <-consumer
+	message := <-consumer.Messages
 
 	rejectReason := "chris is poo"
 
@@ -160,9 +160,9 @@ func TestRequeue(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -180,7 +180,7 @@ func TestRequeue(t *testing.T) {
 
 	var publishedMessage Message
 	select {
-	case msg := <-consumer:
+	case msg := <-consumer.Messages:
 		publishedMessage = msg
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timedout waiting for the consumer")
@@ -196,7 +196,7 @@ func TestRequeue(t *testing.T) {
 
 	var requeuedMessage Message
 	select {
-	case reqMsg := <-consumer:
+	case reqMsg := <-consumer.Messages:
 		requeuedMessage = reqMsg
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timedout waiting for the consumer")
@@ -237,9 +237,9 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -272,7 +272,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	publishedMessage := <-consumer
+	publishedMessage := <-consumer.Messages
 
 	if publishedMessage == nil {
 		t.Fatal("Did not get the published message")
@@ -282,7 +282,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message")
 	}
 
-	firstRequeuedMessage := <-consumer
+	firstRequeuedMessage := <-consumer.Messages
 
 	if firstRequeuedMessage == nil {
 		t.Fatal("Did not get the requeued message")
@@ -336,9 +336,9 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -356,7 +356,7 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	counter := 1
 	for ; counter < 10; counter++ {
-		msg := <-consumer
+		msg := <-consumer.Messages
 		actualMessage := string(msg.Body())
 		expectedMessage := string(payload)
 
@@ -387,9 +387,9 @@ func TestPatterns(t *testing.T) {
 		serviceName,
 	)
 
-	consumer, queuesReady := NewConsumer(config)
+	consumer := NewConsumer(config)
 
-	if ok := <-queuesReady; !ok {
+	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
@@ -407,7 +407,7 @@ func TestPatterns(t *testing.T) {
 		}
 
 		select {
-		case message := <-consumer:
+		case message := <-consumer.Messages:
 			if err := message.Ack(); err != nil {
 				t.Fatal("Error when Acking the message")
 			}

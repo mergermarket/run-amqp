@@ -4,10 +4,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
+//Consumer has a channel for receiving messages
+type Consumer struct {
+	Messages    <-chan Message
+	QueuesBound <-chan bool
+}
+
 /*
 NewConsumer returns a channel of type Message which will be populated as messages arrive in the exchange/queue you have defined in config. This function returns immediately, it does not block waiting for a connection to be established and consumers setup etc. Queues bound is a chan of bool which will send true to you once all connections and bindings are in place.
 */
-func NewConsumer(config ConsumerConfig) (messagesChannel <-chan Message, queuesBound <-chan bool) {
+func NewConsumer(config ConsumerConfig) *Consumer {
 	msgChannel := make(chan Message)
 	qBound := make(chan bool)
 
@@ -40,7 +46,7 @@ func NewConsumer(config ConsumerConfig) (messagesChannel <-chan Message, queuesB
 		}
 	}()
 
-	return msgChannel, qBound
+	return &Consumer{msgChannel, qBound}
 }
 
 func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
