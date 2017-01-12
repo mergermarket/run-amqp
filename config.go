@@ -7,6 +7,7 @@ import (
 type logger interface {
 	Info(...interface{})
 	Error(...interface{})
+	Debug(...interface{})
 }
 
 type connection struct {

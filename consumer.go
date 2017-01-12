@@ -23,7 +23,7 @@ func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
 }
 
 func worker(handler MessageHandler, messages <-chan Message) {
-	for msg := range messages{
+	for msg := range messages {
 		handler.Handle(msg)
 	}
 }

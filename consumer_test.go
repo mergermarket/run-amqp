@@ -2,7 +2,6 @@ package runamqp
 
 import (
 	"fmt"
-	"github.com/mergermarket/gotools"
 	"math/rand"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		Fanout,
 		"test-queue",
 		noPatterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,
@@ -79,7 +78,7 @@ func TestDLQ(t *testing.T) {
 		Fanout,
 		"test-queue-"+randomString(5),
 		noPatterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,
@@ -105,7 +104,7 @@ func TestDLQ(t *testing.T) {
 		Fanout,
 		config.queue.DLQ,
 		noPatterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,
@@ -154,7 +153,7 @@ func TestRequeue(t *testing.T) {
 		Topic,
 		"test-queue-"+randomString(5),
 		patterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		twoRetries,
 		serviceName,
@@ -231,7 +230,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		Fanout,
 		"test-queue-"+randomString(5),
 		noPatterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		oneRetry,
 		serviceName,
@@ -330,7 +329,7 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 		Fanout,
 		"test-queue-"+randomString(5),
 		noPatterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		noTTL,
 		noRetries,
 		serviceName,
@@ -381,7 +380,7 @@ func TestPatterns(t *testing.T) {
 		Topic,
 		"test-queue-"+randomString(5),
 		patterns,
-		tools.TestLogger{T: t},
+		&testLogger{t: t},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,

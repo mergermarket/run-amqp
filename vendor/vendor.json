@@ -17,12 +17,6 @@
 			"revisionTime": "2017-01-05T12:41:58Z"
 		},
 		{
-			"checksumSHA1": "yIWjn6omEvb3SgqYjggnEURrCL0=",
-			"path": "github.com/mergermarket/gotools",
-			"revision": "4f61f183f94ee876cecd91418d0fa3907c04da85",
-			"revisionTime": "2017-01-05T12:41:58Z"
-		},
-		{
 			"checksumSHA1": "qik08F9+tO3aD/VsiPY19IbmT7k=",
 			"path": "github.com/streadway/amqp",
 			"revision": "63795daa9a446c920826655f26ba31c81c860fd6",
