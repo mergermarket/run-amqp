@@ -17,15 +17,11 @@ gometalinter \
 	--exclude='duplicate of.*_test.go.*\(dupl\)$' \
 	--disable=aligncheck \
 	--disable=gotype \
-	--disable=varcheck \
 	--disable=unconvert \
 	--disable=aligncheck \
-	--disable=dupl \
 	--cyclo-over=20 \
 	--tests \
 	--deadline=20s
 
 go fmt $(go list ./... | grep -v /vendor/)
-
 go test $(go list ./... | grep -v acceptance-tests ) --cover -timeout 10s
-go install
