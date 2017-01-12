@@ -1,0 +1,84 @@
+package runamqp
+
+import (
+	"fmt"
+	"log"
+	"time"
+)
+
+type exampleLogger struct {
+}
+
+func (e *exampleLogger) Debug(msgs ...interface{}) {
+}
+
+func (*exampleLogger) Error(msgs ...interface{}) {
+}
+
+func (*exampleLogger) Info(msgs ...interface{}) {
+
+}
+
+type ExampleHandler struct {
+	calledWith string
+}
+
+func (e *ExampleHandler) Handle(msg Message) {
+	e.calledWith = string(msg.Body())
+	msg.Ack()
+}
+
+func ExampleConsumer() {
+
+	// Create a consumer config
+	config := NewConsumerConfig(
+		testRabbitURI,
+		"test-example-exchange",
+		Fanout,
+		"test-example-queue",
+		noPatterns,
+		&exampleLogger{},
+		testRequeueTTL,
+		testRequeueLimit,
+		serviceName,
+	)
+
+	// Create a consumer, which holds the references to the channel of Messages
+	consumer := NewConsumer(config)
+
+	// It's good practice to set a timeout in case we have trouble connecting and configuring rabbit
+	select {
+	case <-consumer.QueuesBound:
+	case <-time.After(10 * time.Second):
+		log.Fatal("Timed out waiting to set up rabbit")
+	}
+
+	// Create a handler for messages
+	handler := &ExampleHandler{}
+
+	// Tell the consumer to process messages using your handler
+	numberOfWorkers := 10
+	consumer.Process(handler, numberOfWorkers)
+
+	// We can now publish to the same exchange for fun
+	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
+	publish, publishReady := NewPublisher(publisherConfig)
+
+	// Lets check the publisher is ready too
+	select {
+	case <-publishReady:
+	case <-time.After(10 * time.Second):
+		log.Fatal("Timed out waiting to set up rabbit")
+	}
+
+	// Publish a message
+	if err := publish([]byte("Hello, world"), ""); err != nil {
+		log.Fatal("Error when Publishing the message")
+	}
+
+	// Wait a little bit!
+	time.Sleep(500 * time.Millisecond)
+
+	fmt.Print(handler.calledWith)
+	// Output: Hello, world
+}
