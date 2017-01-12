@@ -5,6 +5,13 @@ runamqp:
   volumes:
     - .:/go/src/github.com/mergermarket/run-amqp
 
+sampleapp:
+  build: sample
+  links:
+    - rabbitmq
+  volumes:
+    - .:/go/src/github.com/mergermarket/run-amqp
+
 rabbitmq:
   image: rabbitmq:3-management
   expose:
