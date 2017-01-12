@@ -5,31 +5,37 @@ import (
 	"time"
 )
 
+// StubMessage should be used for your tests to stub out a message coming into your system.
 type StubMessage struct {
 	message                              string
 	ackCalled, nackCalled, requeueCalled chan bool
 	timeout                              time.Duration
 }
 
+// Body returns the message you passed into NewStubMessage
 func (s *StubMessage) Body() []byte {
 	return []byte(s.message)
 }
 
+// Ack ...
 func (s *StubMessage) Ack() error {
 	s.ackCalled <- true
 	return nil
 }
 
+// Nack ...
 func (s *StubMessage) Nack(reason string) error {
 	s.nackCalled <- true
 	return nil
 }
 
+// Requeue will obviously not "really" requeue!
 func (s *StubMessage) Requeue(reason string) error {
 	s.requeueCalled <- true
 	return nil
 }
 
+// NewStubMessage returns you a StubMessage. The timeout is for the Get* methods which check to see if functions are called in an asynchonous environment
 func NewStubMessage(msg string, timeout time.Duration) *StubMessage {
 
 	s := new(StubMessage)
@@ -41,6 +47,7 @@ func NewStubMessage(msg string, timeout time.Duration) *StubMessage {
 	return s
 }
 
+// GetAckCalled tells you if Ack was called within the timeout you set in NewStubMessage. This is blocking
 func (s *StubMessage) GetAckCalled() (bool, error) {
 	select {
 	case acked := <-s.ackCalled:
@@ -50,6 +57,7 @@ func (s *StubMessage) GetAckCalled() (bool, error) {
 	}
 }
 
+// GetNackCalled tells you if Nack was called within the timeout you set in NewStubMessage. This is blocking
 func (s *StubMessage) GetNackCalled() (bool, error) {
 	select {
 	case nacked := <-s.nackCalled:
@@ -59,6 +67,7 @@ func (s *StubMessage) GetNackCalled() (bool, error) {
 	}
 }
 
+// GetRequeueCalled tells you if Requeue was called within the timeout you set in NewStubMessage. This is blocking
 func (s *StubMessage) GetRequeueCalled() (bool, error) {
 	select {
 	case requeued := <-s.requeueCalled:

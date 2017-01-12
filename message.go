@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+//todo: make a message interface and turn "Message" into an amqpMessage
+
 // Message is wrapper for the RabbitMq delivery
 type Message struct {
 	delivery               amqp.Delivery
@@ -15,14 +17,17 @@ type Message struct {
 	dleExchangeName        string
 }
 
+// Body returns the body of the AMQP message
 func (m *Message) Body() []byte {
 	return m.delivery.Body
 }
 
+// Ack will acknowledge the message.
 func (m *Message) Ack() error {
 	return m.delivery.Ack(false)
 }
 
+// Nack is used when you cant process a message. The "reason" will appear in the rabbit console under the message headers which is useful for debugging
 func (m *Message) Nack(reason string) error {
 
 	err := m.Ack()
@@ -49,6 +54,7 @@ func (m *Message) Nack(reason string) error {
 	return nil
 }
 
+// Requeue requeues a message, which is useful for when you have transient problems
 func (m Message) Requeue(reason string) error {
 
 	if m.retryLimit > 0 {

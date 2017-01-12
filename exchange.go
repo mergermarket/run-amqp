@@ -6,16 +6,24 @@ import (
 	"strings"
 )
 
+// ExchangeType corresponds to the type of exchanges available in rabbit mq
 type ExchangeType string
 
 const (
-	Fanout       ExchangeType = "fanout"
-	Topic        ExchangeType = "topic"
-	Direct       ExchangeType = "direct"
-	Headers      ExchangeType = "headers"
+	// Fanout should have an explanation from Baktash
+	Fanout ExchangeType = "fanout"
+
+	// Topic should have an explanation from Baktash
+	Topic ExchangeType = "topic"
+
+	// Direct should have an explanation from Baktash
+	Direct ExchangeType = "direct"
+
+	// Unrecognised is a catch all for exchanges that arent supported
 	Unrecognised ExchangeType = "unrecognised"
 )
 
+// NewExchangeType returns an Exchange type for a given string if it is a valid
 func NewExchangeType(typ string) (ExchangeType, error) {
 	lowercaseType := strings.ToLower(typ)
 
@@ -26,8 +34,6 @@ func NewExchangeType(typ string) (ExchangeType, error) {
 		return Fanout, nil
 	case "direct":
 		return Direct, nil
-	case "headers":
-		return Headers, nil
 	default:
 		return Unrecognised, fmt.Errorf("Unrecognised exchange type %s", typ)
 	}

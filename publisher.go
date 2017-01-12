@@ -7,10 +7,10 @@ import (
 
 type publisher struct {
 	currentAmqpChannel *amqp.Channel
-	config             publisherConfig
+	config             PublisherConfig
 }
 
-func newPublisher(channels <-chan *amqp.Channel, config publisherConfig, publishReady chan bool) *publisher {
+func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *publisher {
 	p := new(publisher)
 	p.config = config
 
@@ -24,6 +24,7 @@ func newPublisher(channels <-chan *amqp.Channel, config publisherConfig, publish
 	return p
 }
 
+// Publish will publish a message to the configured exchange
 func (p *publisher) Publish(msg []byte, pattern string) error {
 	err := p.currentAmqpChannel.Publish(
 		p.config.exchange.Name,
@@ -44,7 +45,8 @@ func (p *publisher) Publish(msg []byte, pattern string) error {
 	return nil
 }
 
-func NewPublisher(config publisherConfig) (func(message []byte, pattern string) error, <-chan bool) {
+// NewPublisher returns a function to send messages to the exchange defined in your config
+func NewPublisher(config PublisherConfig) (func(message []byte, pattern string) error, <-chan bool) {
 	publishReady := make(chan bool)
 	rabbitState := makeNewConnectedRabbit(config.connection, config.exchange)
 	p := newPublisher(rabbitState.newlyOpenedChannels, config, publishReady)

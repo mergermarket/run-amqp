@@ -431,3 +431,22 @@ func randomString(n int) string {
 	}
 	return string(b)
 }
+
+func newDirectConsumer(config ConsumerConfig) (<-chan *Message, <-chan bool) {
+	msgChannel := make(chan *Message)
+	qBound := make(chan bool)
+
+	go func() {
+		rabbit := makeNewConnectedRabbit(config.connection, config.exchange)
+		for ch := range rabbit.newlyOpenedChannels {
+			err := consumeQueue(ch, config, msgChannel)
+			if err != nil {
+				qBound <- false
+			} else {
+				qBound <- true
+			}
+		}
+	}()
+
+	return msgChannel, qBound
+}

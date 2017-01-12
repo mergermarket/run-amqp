@@ -31,21 +31,23 @@ type queue struct {
 	Patterns   []string
 }
 
-type publisherConfig struct {
+// PublisherConfig is used to create a connection to an exchange for publishing messages to
+type PublisherConfig struct {
 	connection
 	exchange exchange
 }
 
-type consumerConfig struct {
+// ConsumerConfig is used to create a connection to an exchange with a corresponding queue to listen to messages on
+type ConsumerConfig struct {
 	connection
 	exchange exchange
 	queue    queue
 }
 
 // NewPublisherConfig config for establishing a RabbitMq publisher
-func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) publisherConfig {
+func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) PublisherConfig {
 
-	return publisherConfig{
+	return PublisherConfig{
 		connection: connection{
 			URL:    URL,
 			Logger: logger,
@@ -58,14 +60,14 @@ func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeTy
 }
 
 // NewConsumerConfig config for establishing a RabbitMq consumer
-func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeType, queueName string, patterns []string, logger logger, requeueTTL int16, requeueLimit int, serviceName string) consumerConfig {
+func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeType, queueName string, patterns []string, logger logger, requeueTTL int16, requeueLimit int, serviceName string) ConsumerConfig {
 
 	if len(patterns) == 0 {
 		logger.Info("Executive decision made! You did not supply a pattern so we have added a default of '#'")
 		patterns = append(patterns, "#") //testme
 	}
 
-	return consumerConfig{
+	return ConsumerConfig{
 		connection: connection{
 			URL:    URL,
 			Logger: logger,

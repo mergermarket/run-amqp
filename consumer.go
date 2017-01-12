@@ -4,7 +4,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func NewConsumer(config consumerConfig) (messagesChannel <-chan *Message, queuesBound <-chan bool) {
+/*
+NewConsumer returns a channel of type Message which will be populated as messages arrive in the exchange/queue you have defined in config. This function returns immediately, it does not block waiting for a connection to be established and consumers setup etc. Queues bound is a chan of bool which will send true to you once all connections and bindings are in place.
+*/
+func NewConsumer(config ConsumerConfig) (messagesChannel <-chan *Message, queuesBound <-chan bool) {
 	msgChannel := make(chan *Message)
 	qBound := make(chan bool)
 
@@ -40,26 +43,7 @@ func NewConsumer(config consumerConfig) (messagesChannel <-chan *Message, queues
 	return msgChannel, qBound
 }
 
-func newDirectConsumer(config consumerConfig) (<-chan *Message, <-chan bool) {
-	msgChannel := make(chan *Message)
-	qBound := make(chan bool)
-
-	go func() {
-		rabbit := makeNewConnectedRabbit(config.connection, config.exchange)
-		for ch := range rabbit.newlyOpenedChannels {
-			err := consumeQueue(ch, config, msgChannel)
-			if err != nil {
-				qBound <- false
-			} else {
-				qBound <- true
-			}
-		}
-	}()
-
-	return msgChannel, qBound
-}
-
-func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config consumerConfig) error {
+func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
 
 	err := addDleExchangeAndQueue(ch, config)
 
@@ -83,7 +67,7 @@ func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config consumerConfig
 	return nil
 }
 
-func addDleExchangeAndQueue(ch *amqp.Channel, config consumerConfig) error {
+func addDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
 
 	// make dle/dlq
 	err := makeExchange(ch, config.exchange.DLE, config.exchange.Type)
@@ -105,7 +89,7 @@ func addDleExchangeAndQueue(ch *amqp.Channel, config consumerConfig) error {
 
 const matchAllPattern = "#"
 
-func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config consumerConfig) error {
+func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig) error {
 
 	retryNowExchangeName := config.exchange.RetryNow
 	retryLaterExchangeName := config.exchange.RetryLater
@@ -156,7 +140,7 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config consumerConfig)
 	return nil
 }
 
-func consumeQueue(amqpChannel *amqp.Channel, config consumerConfig, messageChannel chan<- *Message) error {
+func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- *Message) error {
 
 	msgs, err := amqpChannel.Consume(
 		config.queue.Name, // queue
