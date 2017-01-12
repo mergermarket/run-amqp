@@ -14,6 +14,10 @@ func (e *ExampleHandlerToTest) Handle(msg Message) {
 	msg.Ack()
 }
 
+func (e *ExampleHandlerToTest) Name() string {
+	return "Always acking handler"
+}
+
 func ExampleStubMessage() {
 
 	// Create the thing you want to test

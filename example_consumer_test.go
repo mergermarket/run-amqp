@@ -17,6 +17,10 @@ func (e *ExampleHandler) Handle(msg Message) {
 	msg.Ack()
 }
 
+func (e *ExampleHandler) Name() string {
+	return "Example Handler"
+}
+
 func ExampleConsumer() {
 
 	// Create a consumer config

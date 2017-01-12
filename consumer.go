@@ -8,24 +8,28 @@ import (
 type Consumer struct {
 	Messages    <-chan Message
 	QueuesBound <-chan bool
+	logger      logger
 }
 
 // MessageHandler is something that can process a Message, calling Ack, Nack when appropiate for your domain
 type MessageHandler interface {
+	Name() string
 	Handle(msg Message)
 }
 
 // Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer's Messages channel.
 func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
+	c.logger.Debug("Registering", numberOfWorkers, "for", handler.Name())
 	for w := 0; w < numberOfWorkers; w++ {
-		go worker(handler, c.Messages)
+		go c.worker(handler)
 	}
 }
 
-func worker(handler MessageHandler, messages <-chan Message) {
-	for msg := range messages {
+func (c *Consumer) worker(handler MessageHandler) {
+	for msg := range c.Messages {
 		handler.Handle(msg)
 	}
+	c.logger.Error("Messages channel was closed, worker for", handler.Name(), "has stopped")
 }
 
 // NewConsumer returns a Consumer
@@ -62,7 +66,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 		}
 	}()
 
-	return &Consumer{msgChannel, qBound}
+	return &Consumer{msgChannel, qBound, config.Logger}
 }
 
 func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {

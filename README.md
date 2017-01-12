@@ -10,6 +10,16 @@ Given this set up, the library provides simple interfaces to register `MessageHa
 
 [The best place for documentation is of course go doc](https://godoc.org/github.com/mergermarket/run-amqp)
 
+## running tests
+
+You will need
+- Go installed and workspace set up as described in https://golang.org/doc/code.html
+- Docker & Docker Compose
+
+Check out into `$GOPATH/src/github.com/mergermarket/run-amqp`.
+
+`docker-compose run runamqp`
+
 ## Exchanges & Queues autocreated
 
 todo!

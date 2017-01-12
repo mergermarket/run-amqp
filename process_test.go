@@ -14,12 +14,17 @@ func (a *alwaysAckingHandler) Handle(msg Message) {
 	msg.Ack()
 }
 
+func (a *alwaysAckingHandler) Name() string {
+	return "Always acking handler"
+}
+
 func TestConsumerProcessesMessages(t *testing.T) {
 
 	messages := make(chan Message)
 
 	consumer := &Consumer{
 		Messages: messages,
+		logger:   &testLogger{t},
 	}
 
 	handler := &alwaysAckingHandler{}
