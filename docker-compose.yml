@@ -1,0 +1,14 @@
+runamqp:
+  build: .
+  links:
+    - rabbitmq
+  volumes:
+    - .:/go/src/github.com/mergermarket/run-amqp
+
+rabbitmq:
+  image: rabbitmq:3-management
+  expose:
+    - "5672"
+    - "15672"
+  ports:
+    - "15672:15672"

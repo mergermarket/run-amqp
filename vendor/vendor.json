@@ -1,0 +1,39 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "CMcHvqld6XBCDYA+9jCy6gT1O0Q=",
+			"origin": "github.com/mergermarket/gotools/vendor/github.com/DataDog/datadog-go/statsd",
+			"path": "github.com/DataDog/datadog-go/statsd",
+			"revision": "4f61f183f94ee876cecd91418d0fa3907c04da85",
+			"revisionTime": "2017-01-05T12:41:58Z"
+		},
+		{
+			"checksumSHA1": "LIEX/dDzkTCsgDmAYMqxvq4zt5M=",
+			"origin": "github.com/mergermarket/gotools/vendor/github.com/Sirupsen/logrus",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "4f61f183f94ee876cecd91418d0fa3907c04da85",
+			"revisionTime": "2017-01-05T12:41:58Z"
+		},
+		{
+			"checksumSHA1": "yIWjn6omEvb3SgqYjggnEURrCL0=",
+			"path": "github.com/mergermarket/gotools",
+			"revision": "4f61f183f94ee876cecd91418d0fa3907c04da85",
+			"revisionTime": "2017-01-05T12:41:58Z"
+		},
+		{
+			"checksumSHA1": "qik08F9+tO3aD/VsiPY19IbmT7k=",
+			"path": "github.com/streadway/amqp",
+			"revision": "63795daa9a446c920826655f26ba31c81c860fd6",
+			"revisionTime": "2016-12-24T08:20:40Z"
+		},
+		{
+			"checksumSHA1": "8fD/im5Kwvy3JgmxulDTambmE8w=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "a646d33e2ee3172a661fc09bca23bb4889a41bc8",
+			"revisionTime": "2016-07-15T05:43:45Z"
+		}
+	],
+	"rootPath": "github.com/mergermarket/run-amqp"
+}
