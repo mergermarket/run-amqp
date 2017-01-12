@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"github.com/streadway/amqp"
+	"math"
 	"time"
 )
 
@@ -74,8 +75,9 @@ func (r *rabbitState) cleanupOldResources() {
 }
 
 func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
+	attempts := 0
 	for {
-
+		attempts++
 		conn, err := amqp.DialConfig(uri, amqp.Config{
 			Heartbeat: 30 * time.Second,
 		})
@@ -86,8 +88,10 @@ func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
 		}
 
 		logger.Error(err)
-		logger.Info("Trying to reconnect to RabbitMQ at", uri)
-		time.Sleep(500 * time.Millisecond)
+		millis := math.Exp2(float64(attempts))
+		sleepDuration := time.Duration(int(millis)) * time.Second
+		logger.Info("Trying to reconnect to RabbitMQ at", uri, "after", sleepDuration)
+		time.Sleep(sleepDuration)
 	}
 }
 
