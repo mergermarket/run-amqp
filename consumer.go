@@ -7,8 +7,8 @@ import (
 /*
 NewConsumer returns a channel of type Message which will be populated as messages arrive in the exchange/queue you have defined in config. This function returns immediately, it does not block waiting for a connection to be established and consumers setup etc. Queues bound is a chan of bool which will send true to you once all connections and bindings are in place.
 */
-func NewConsumer(config ConsumerConfig) (messagesChannel <-chan *Message, queuesBound <-chan bool) {
-	msgChannel := make(chan *Message)
+func NewConsumer(config ConsumerConfig) (messagesChannel <-chan Message, queuesBound <-chan bool) {
+	msgChannel := make(chan Message)
 	qBound := make(chan bool)
 
 	go func() {
@@ -140,7 +140,7 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	return nil
 }
 
-func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- *Message) error {
+func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- Message) error {
 
 	msgs, err := amqpChannel.Consume(
 		config.queue.Name, // queue
@@ -161,7 +161,7 @@ func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChann
 
 	go func() {
 		for d := range msgs {
-			messageChannel <- &Message{
+			messageChannel <- &amqpMessage{
 				delivery:               d,
 				amqpChannel:            amqpChannel,
 				retryLimit:             config.queue.RetryLimit,

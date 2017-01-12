@@ -6,10 +6,15 @@ import (
 	"time"
 )
 
-//todo: make a message interface and turn "Message" into an amqpMessage
+// Message represents a delivery over an amqp channel
+type Message interface {
+	Ack() error
+	Body() []byte
+	Nack(reason string) error
+	Requeue(reason string) error
+}
 
-// Message is wrapper for the RabbitMq delivery
-type Message struct {
+type amqpMessage struct {
 	delivery               amqp.Delivery
 	amqpChannel            *amqp.Channel
 	retryLimit             int
@@ -18,17 +23,17 @@ type Message struct {
 }
 
 // Body returns the body of the AMQP message
-func (m *Message) Body() []byte {
+func (m *amqpMessage) Body() []byte {
 	return m.delivery.Body
 }
 
 // Ack will acknowledge the message.
-func (m *Message) Ack() error {
+func (m *amqpMessage) Ack() error {
 	return m.delivery.Ack(false)
 }
 
 // Nack is used when you cant process a message. The "reason" will appear in the rabbit console under the message headers which is useful for debugging
-func (m *Message) Nack(reason string) error {
+func (m *amqpMessage) Nack(reason string) error {
 
 	err := m.Ack()
 
@@ -55,7 +60,7 @@ func (m *Message) Nack(reason string) error {
 }
 
 // Requeue requeues a message, which is useful for when you have transient problems
-func (m Message) Requeue(reason string) error {
+func (m *amqpMessage) Requeue(reason string) error {
 
 	if m.retryLimit > 0 {
 		retryCount := 1

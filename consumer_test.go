@@ -135,7 +135,9 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("failed to get dlq'd message")
 	}
 
-	if dlqMessage.delivery.Headers["x-dle-reason"] != rejectReason {
+	dlqMessageAMQP, _ := dlqMessage.(*amqpMessage)
+
+	if dlqMessageAMQP.delivery.Headers["x-dle-reason"] != rejectReason {
 		t.Fatal("x-dle-reason was not set correctly")
 	}
 
@@ -176,7 +178,7 @@ func TestRequeue(t *testing.T) {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	var publishedMessage *Message
+	var publishedMessage Message
 	select {
 	case msg := <-consumer:
 		publishedMessage = msg
@@ -192,7 +194,7 @@ func TestRequeue(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message")
 	}
 
-	var requeuedMessage *Message
+	var requeuedMessage Message
 	select {
 	case reqMsg := <-consumer:
 		requeuedMessage = reqMsg
@@ -211,7 +213,9 @@ func TestRequeue(t *testing.T) {
 		t.Fatalf("Failed to get the requeued message: %s but got %s", expectedMessage, actualMessage)
 	}
 
-	if _, found := requeuedMessage.delivery.Headers["x-retry-count"]; !found {
+	amqpMsg, _ := requeuedMessage.(*amqpMessage)
+
+	if _, found := amqpMsg.delivery.Headers["x-retry-count"]; !found {
 		t.Fatal("x-retry-count was not set correctly")
 	}
 
@@ -291,7 +295,9 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatalf("Failed to get the requeued message: %s but got %s", expectedMessage, actualMessage)
 	}
 
-	if _, found := firstRequeuedMessage.delivery.Headers["x-retry-count"]; !found {
+	firstMsgAmqp, _ := firstRequeuedMessage.(*amqpMessage)
+
+	if _, found := firstMsgAmqp.delivery.Headers["x-retry-count"]; !found {
 		t.Fatal("x-retry-count was not set correctly")
 	}
 
@@ -305,7 +311,9 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("failed to get dlq'd message")
 	}
 
-	if dlqMessage.delivery.Headers["x-dle-reason"] != "This should end up in the DLQ - Reached the max 1 number of retries." {
+	dlqMsgAMQP, _ := dlqMessage.(*amqpMessage)
+
+	if dlqMsgAMQP.delivery.Headers["x-dle-reason"] != "This should end up in the DLQ - Reached the max 1 number of retries." {
 		t.Fatal("x-dle-reason was not set correctly")
 	}
 }
@@ -432,8 +440,8 @@ func randomString(n int) string {
 	return string(b)
 }
 
-func newDirectConsumer(config ConsumerConfig) (<-chan *Message, <-chan bool) {
-	msgChannel := make(chan *Message)
+func newDirectConsumer(config ConsumerConfig) (<-chan Message, <-chan bool) {
+	msgChannel := make(chan Message)
 	qBound := make(chan bool)
 
 	go func() {
