@@ -29,15 +29,16 @@ func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
 // https://github.com/streadway/amqp/issues/160
 func (r *rabbitState) connect() {
 
-	connectionErrors := make(chan *amqp.Error)
-	go r.listenForConnectionErrors(connectionErrors)
+	//todo: what do we do when there is a conn err but no chan error?
+	//connectionErrors := make(chan *amqp.Error)
+	//go r.listenForConnectionErrors(connectionErrors)
 
 	r.cleanupOldResources()
 
 	r.config.Logger.Info("Connecting to", r.config.URL)
 
 	r.currentAmqpConnection = connectToRabbitMQ(r.config.URL, r.config.Logger)
-	r.currentAmqpConnection.NotifyClose(connectionErrors)
+	//r.currentAmqpConnection.NotifyClose(connectionErrors)
 
 	r.config.Logger.Info("Connected to", r.config.URL)
 
@@ -57,21 +58,21 @@ func (r *rabbitState) connect() {
 	r.newlyOpenedChannels <- newChannel
 }
 
-func (r *rabbitState) listenForConnectionErrors(errors chan *amqp.Error) {
-	for rabbitErr := range errors {
-		if rabbitErr != nil {
-			r.config.Logger.Error("There was a connection problem", rabbitErr)
-			r.connect()
-		}
-	}
-	r.config.Logger.Debug("Rabbit errors channel closed")
-}
+//func (r *rabbitState) listenForConnectionErrors(errors chan *amqp.Error) {
+//	for rabbitErr := range errors {
+//		if rabbitErr != nil {
+//			r.config.Logger.Error("There was a connection problem", rabbitErr)
+//			r.connect()
+//		}
+//	}
+//	r.config.Logger.Debug("Rabbit errors channel closed")
+//}
 
-//todo: What do we do when a channel closes?
 func (r *rabbitState) listenForChannelErrors(errors chan *amqp.Error) {
 	for rabbitErr := range errors {
 		if rabbitErr != nil {
 			r.config.Logger.Error("There was an error with channel", rabbitErr)
+			r.connect()
 		}
 	}
 	r.config.Logger.Debug("Rabbit errors channel closed")
