@@ -39,8 +39,10 @@ func TestConsumerConsumesMessages(t *testing.T) {
 
 	consumer := NewConsumer(config)
 
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
+	select {
+	case <-consumer.QueuesBound:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Didnt bind queues in time")
 	}
 
 	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
