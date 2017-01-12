@@ -6,23 +6,12 @@ import (
 	"time"
 )
 
-type exampleLogger struct {
-}
-
-func (e *exampleLogger) Debug(msgs ...interface{}) {
-}
-
-func (*exampleLogger) Error(msgs ...interface{}) {
-}
-
-func (*exampleLogger) Info(msgs ...interface{}) {
-
-}
-
+// Example handler is the sort of thing you'll make for your application to process amqp messages
 type ExampleHandler struct {
 	calledWith string
 }
 
+// Handle is how you implement the MessageHandler interface, what you do with it is up to you
 func (e *ExampleHandler) Handle(msg Message) {
 	e.calledWith = string(msg.Body())
 	msg.Ack()
@@ -64,7 +53,7 @@ func ExampleConsumer() {
 	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
 	publish, publishReady := NewPublisher(publisherConfig)
 
-	// Lets check the publisher is ready too
+	// Let's check the publisher is ready too
 	select {
 	case <-publishReady:
 	case <-time.After(10 * time.Second):
@@ -77,8 +66,14 @@ func ExampleConsumer() {
 	}
 
 	// Wait a little bit!
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(5 * time.Millisecond)
 
 	fmt.Print(handler.calledWith)
 	// Output: Hello, world
 }
+
+type exampleLogger struct{}
+
+func (e *exampleLogger) Debug(msgs ...interface{}) {}
+func (*exampleLogger) Error(msgs ...interface{})   {}
+func (*exampleLogger) Info(msgs ...interface{})    {}
