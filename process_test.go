@@ -24,7 +24,7 @@ func TestConsumerProcessesMessages(t *testing.T) {
 
 	handler := &alwaysAckingHandler{}
 
-	go consumer.Process(handler, 5)
+	consumer.Process(handler, 5)
 
 	msg := NewStubMessage("hello, world", 5*time.Millisecond)
 	messages <- msg

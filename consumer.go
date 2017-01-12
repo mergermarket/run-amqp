@@ -15,9 +15,15 @@ type MessageHandler interface {
 	Handle(msg Message)
 }
 
-// Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer Messages channel. This method is blocking.
+// Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer Messages channel.
 func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
-	for msg := range c.Messages {
+	for w := 0; w < numberOfWorkers; w++ {
+		go worker(handler, c.Messages)
+	}
+}
+
+func worker(handler MessageHandler, messages <-chan Message) {
+	for msg := range messages{
 		handler.Handle(msg)
 	}
 }
