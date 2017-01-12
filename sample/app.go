@@ -5,6 +5,7 @@ import (
 	"time"
 	"log"
 	"github.com/mergermarket/run-amqp"
+	"net/http"
 )
 
 const numberOfWorkers = 3
@@ -12,7 +13,6 @@ const exchangeName = "test-example-exchange"
 var noPatterns = []string{""}
 
 func main() {
-	forever := make(chan bool)
 
 	fmt.Println("Run amqp test bench")
 
@@ -54,7 +54,20 @@ func main() {
 	publish([]byte("2"), "")
 	publish([]byte("3"), "")
 
-	<-forever
+	svr := httpPublisher{publish}
+
+	log.Println("Listening on 8080, hit it on / to publish a message and see what happens")
+
+	http.ListenAndServe(":8080", &svr)
+}
+
+type httpPublisher struct{
+	p runamqp.PublishFunc
+}
+
+func (h *httpPublisher) ServeHTTP(http.ResponseWriter, *http.Request) {
+	log.Println("Going to try and publish....")
+	h.p([]byte("Pokey"), "")
 }
 
 type logger struct {}

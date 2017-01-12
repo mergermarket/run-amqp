@@ -10,7 +10,6 @@ type rabbitState struct {
 	currentAmqpConnection *amqp.Connection
 	currentAmqpChannel    *amqp.Channel
 	newlyOpenedChannels   chan *amqp.Channel
-	errors                chan *amqp.Error
 	config                connection
 	exchangeConfig        exchange
 }
@@ -19,57 +18,68 @@ func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
 
 	r := new(rabbitState)
 	r.newlyOpenedChannels = make(chan *amqp.Channel, 1)
-	r.errors = make(chan *amqp.Error)
 	r.config = config
 	r.exchangeConfig = exchange
 
 	go r.connect()
-	go r.listenForErrors()
 
 	return r
 }
 
+// https://github.com/streadway/amqp/issues/160
 func (r *rabbitState) connect() {
+
+	connectionErrors := make(chan *amqp.Error)
+	go r.listenForErrors(connectionErrors)
 
 	r.cleanupOldResources()
 
 	r.config.Logger.Info("Connecting to", r.config.URL)
 
 	r.currentAmqpConnection = connectToRabbitMQ(r.config.URL, r.config.Logger)
-	r.currentAmqpConnection.NotifyClose(r.errors)
+	r.currentAmqpConnection.NotifyClose(connectionErrors)
 
 	r.config.Logger.Info("Connected to", r.config.URL)
 
 	newChannel, err := r.currentAmqpConnection.Channel()
 
-	newChannel.NotifyClose(r.errors)
-	sendError(err, r.errors)
+	channelErrors := make(chan *amqp.Error)
+	go r.listenForErrors(channelErrors)
+
+	newChannel.NotifyClose(channelErrors)
+	sendError(err, channelErrors)
 
 	err = makeExchange(newChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
 
-	sendError(err, r.errors)
+	sendError(err, channelErrors)
 
 	r.currentAmqpChannel = newChannel
 	r.newlyOpenedChannels <- newChannel
 }
 
-func (r *rabbitState) listenForErrors() {
-	for rabbitErr := range r.errors {
+//todo: Question. This is now listening to both channel and connection errors, handling them the same way. Surely we shouldnt be doing that?
+func (r *rabbitState) listenForErrors(errors chan *amqp.Error) {
+	for rabbitErr := range errors {
 		if rabbitErr != nil {
-			r.config.Logger.Error("There was an error with the rabbit connection", rabbitErr)
+			r.config.Logger.Error("There was an error with rabbit", rabbitErr)
 			r.connect()
 		}
 	}
+	r.config.Logger.Debug("Rabbit errors channel closed")
 }
 
 func (r *rabbitState) cleanupOldResources() {
-	if r.currentAmqpChannel != nil {
-		r.currentAmqpChannel.Close()
-	}
+	r.config.Logger.Debug("Cleaning old resources before reconnecting")
+
+	// this just hangs?
+	//if r.currentAmqpChannel != nil {
+	//	r.currentAmqpChannel.Close()
+	//}
 
 	if r.currentAmqpConnection != nil {
 		r.currentAmqpConnection.Close()
 	}
+	r.config.Logger.Debug("Resources cleaned")
 }
 
 func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {

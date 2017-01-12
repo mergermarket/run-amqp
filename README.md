@@ -22,7 +22,7 @@ Check out into `$GOPATH/src/github.com/mergermarket/run-amqp`.
 
 There is a test harness app in `sample` so you can play around with it a bit
 
-`docker-compose run sampleapp`
+`docker-compose run --service-ports sampleapp`
 
 ## Exchanges & Queues autocreated
 

@@ -45,8 +45,11 @@ func (p *publisher) Publish(msg []byte, pattern string) error {
 	return nil
 }
 
+// PublishFunc is a method which will publish a method with optional pattern to an exchange
+type PublishFunc func(message []byte, pattern string) error
+
 // NewPublisher returns a function to send messages to the exchange defined in your config
-func NewPublisher(config PublisherConfig) (func(message []byte, pattern string) error, <-chan bool) {
+func NewPublisher(config PublisherConfig) (PublishFunc, <-chan bool) {
 	publishReady := make(chan bool)
 	rabbitState := makeNewConnectedRabbit(config.connection, config.exchange)
 	p := newPublisher(rabbitState.newlyOpenedChannels, config, publishReady)
