@@ -19,7 +19,7 @@ type MessageHandler interface {
 
 // Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer's Messages channel.
 func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
-	c.logger.Debug("Registering", numberOfWorkers, "for", handler.Name())
+	c.logger.Debug("Registering", numberOfWorkers, "workers for", handler.Name())
 	for w := 0; w < numberOfWorkers; w++ {
 		go c.worker(handler)
 	}

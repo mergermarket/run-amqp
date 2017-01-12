@@ -42,8 +42,6 @@ func (r *rabbitState) connect() {
 
 	newChannel, err := r.currentAmqpConnection.Channel()
 
-	r.config.Logger.Info("Opened channel")
-
 	newChannel.NotifyClose(r.errors)
 	sendError(err, r.errors)
 
