@@ -17,7 +17,7 @@ func (e *ExampleHandlerToTest) Handle(msg Message) {
 func ExampleStubMessage() {
 
 	// Create the thing you want to test
-	handler := &ExampleHandler{}
+	handler := &ExampleHandlerToTest{}
 
 	// An example message you want to test your system against
 	msg := NewStubMessage("Some payload", 50*time.Millisecond)
