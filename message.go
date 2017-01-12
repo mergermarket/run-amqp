@@ -52,11 +52,7 @@ func (m *amqpMessage) Nack(reason string) error {
 
 	err = m.amqpChannel.Publish(m.dleExchangeName, m.delivery.RoutingKey, false, false, payload)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Requeue requeues a message, which is useful for when you have transient problems
@@ -75,13 +71,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 		}
 
 		if retryCount > m.retryLimit {
-			err := m.Nack(fmt.Sprintf("%s - Reached the max %d number of retries.", reason, m.retryLimit))
-
-			if err != nil {
-				return err
-			}
-
-			return nil
+			return m.Nack(fmt.Sprintf("%s - Reached the max %d number of retries.", reason, m.retryLimit))
 		}
 
 		headers := make(map[string]interface{})
@@ -99,14 +89,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 			return err
 		}
 
-		err = m.amqpChannel.Publish(m.retryLaterExchangeName, m.delivery.RoutingKey, false, false, payload)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-
+		return m.amqpChannel.Publish(m.retryLaterExchangeName, m.delivery.RoutingKey, false, false, payload)
 	}
 
 	return m.delivery.Reject(true)
