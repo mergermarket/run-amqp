@@ -4,15 +4,25 @@ import (
 	"github.com/streadway/amqp"
 )
 
-//Consumer has a channel for receiving messages
+// Consumer has a channel for receiving messages
 type Consumer struct {
 	Messages    <-chan Message
 	QueuesBound <-chan bool
 }
 
-/*
-NewConsumer returns a channel of type Message which will be populated as messages arrive in the exchange/queue you have defined in config. This function returns immediately, it does not block waiting for a connection to be established and consumers setup etc. Queues bound is a chan of bool which will send true to you once all connections and bindings are in place.
-*/
+// MessageHandler is something that can process a Message, calling Ack, Nack when appropiate for your domain
+type MessageHandler interface {
+	Handle(msg Message)
+}
+
+// Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer Messages channel. This method is blocking.
+func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
+	for msg := range c.Messages {
+		handler.Handle(msg)
+	}
+}
+
+// NewConsumer returns a Consumer
 func NewConsumer(config ConsumerConfig) *Consumer {
 	msgChannel := make(chan Message)
 	qBound := make(chan bool)
