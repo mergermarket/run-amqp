@@ -30,7 +30,7 @@ func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
 func (r *rabbitState) connect() {
 
 	connectionErrors := make(chan *amqp.Error)
-	go r.listenForErrors(connectionErrors)
+	go r.listenForConnectionErrors(connectionErrors)
 
 	r.cleanupOldResources()
 
@@ -44,7 +44,7 @@ func (r *rabbitState) connect() {
 	newChannel, err := r.currentAmqpConnection.Channel()
 
 	channelErrors := make(chan *amqp.Error)
-	go r.listenForErrors(channelErrors)
+	go r.listenForChannelErrors(channelErrors)
 
 	newChannel.NotifyClose(channelErrors)
 	sendError(err, channelErrors)
@@ -57,12 +57,21 @@ func (r *rabbitState) connect() {
 	r.newlyOpenedChannels <- newChannel
 }
 
-//todo: Question. This is now listening to both channel and connection errors, handling them the same way. Surely we shouldnt be doing that?
-func (r *rabbitState) listenForErrors(errors chan *amqp.Error) {
+func (r *rabbitState) listenForConnectionErrors(errors chan *amqp.Error) {
 	for rabbitErr := range errors {
 		if rabbitErr != nil {
-			r.config.Logger.Error("There was an error with rabbit", rabbitErr)
+			r.config.Logger.Error("There was a connection problem", rabbitErr)
 			r.connect()
+		}
+	}
+	r.config.Logger.Debug("Rabbit errors channel closed")
+}
+
+//todo: What do we do when a channel closes?
+func (r *rabbitState) listenForChannelErrors(errors chan *amqp.Error) {
+	for rabbitErr := range errors {
+		if rabbitErr != nil {
+			r.config.Logger.Error("There was an error with channel", rabbitErr)
 		}
 	}
 	r.config.Logger.Debug("Rabbit errors channel closed")
@@ -71,13 +80,25 @@ func (r *rabbitState) listenForErrors(errors chan *amqp.Error) {
 func (r *rabbitState) cleanupOldResources() {
 	r.config.Logger.Debug("Cleaning old resources before reconnecting")
 
-	// this just hangs?
-	//if r.currentAmqpChannel != nil {
-	//	r.currentAmqpChannel.Close()
-	//}
+	if r.currentAmqpChannel != nil {
+		r.config.Logger.Debug("Closing channel", r.currentAmqpChannel)
+		if err := r.currentAmqpChannel.Close(); err != nil{
+			r.config.Logger.Error(err)
+		} else {
+			r.currentAmqpChannel = nil;
+			r.config.Logger.Debug("Closed channel")
+		}
+	}
 
 	if r.currentAmqpConnection != nil {
-		r.currentAmqpConnection.Close()
+		r.config.Logger.Debug("Closing connection", r.currentAmqpConnection)
+		if err := r.currentAmqpConnection.Close(); err != nil{
+			r.config.Logger.Error(err)
+		} else {
+			r.currentAmqpConnection.ConnectionState()
+			r.currentAmqpConnection = nil;
+			r.config.Logger.Debug("Closed connection")
+		}
 	}
 	r.config.Logger.Debug("Resources cleaned")
 }
