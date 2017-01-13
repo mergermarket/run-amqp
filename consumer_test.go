@@ -25,19 +25,9 @@ var noPatterns = []string{""}
 
 func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
-	config := NewConsumerConfig(
-		testRabbitURI,
-		"test-exchange",
-		Fanout,
-		"test-queue",
-		noPatterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		testRequeueLimit,
-		serviceName,
-	)
 
-	consumer := NewConsumer(config)
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+	consumer := NewConsumer(consumerConfig)
 
 	select {
 	case <-consumer.QueuesBound:
@@ -45,9 +35,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		t.Fatal("Didnt bind queues in time")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
@@ -74,43 +62,23 @@ func TestConsumerConsumesMessages(t *testing.T) {
 func TestDLQ(t *testing.T) {
 	t.Parallel()
 
-	config := NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		"test-exchange-"+randomString(5),
-		Fanout,
-		"test-queue-"+randomString(5),
-		noPatterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		testRequeueLimit,
-		serviceName,
-	)
-
-	consumer := NewConsumer(config)
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+	consumer := NewConsumer(consumerConfig)
 
 	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
-	dlqConfig := NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		config.exchange.DLE,
-		Fanout,
-		config.queue.DLQ,
-		noPatterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		testRequeueLimit,
-		serviceName,
-	)
+	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		ExchangeName: consumerConfig.exchange.DLE,
+		Queuename:    consumerConfig.queue.DLQ,
+	})
 
 	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
 
@@ -149,27 +117,18 @@ func TestRequeue(t *testing.T) {
 
 	const twoRetries = 2
 	patterns := []string{"*.notifications.bounced", "*.notifications.dropped"}
-	config := NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		"test-exchange-"+randomString(5),
-		Topic,
-		"test-queue-"+randomString(5),
-		patterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		twoRetries,
-		serviceName,
-	)
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		Patterns: patterns,
+		Retries:  twoRetries,
+	})
 
-	consumer := NewConsumer(config)
+	consumer := NewConsumer(consumerConfig)
 
 	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
@@ -226,44 +185,29 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 	t.Parallel()
 
 	oneRetry := 1
-	config := NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		"test-exchange-"+randomString(5),
-		Fanout,
-		"test-queue-"+randomString(5),
-		noPatterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		oneRetry,
-		serviceName,
-	)
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		Retries: oneRetry,
+	})
 
-	consumer := NewConsumer(config)
+	consumer := NewConsumer(consumerConfig)
 
 	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	dlqConfig := NewConsumerConfig(
-		config.URL,
-		config.exchange.DLE,
-		config.exchange.Type,
-		config.queue.DLQ,
-		noPatterns,
-		config.Logger,
-		testRequeueTTL,
-		oneRetry,
-		serviceName,
-	)
+	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		ExchangeName: consumerConfig.exchange.DLE,
+		Queuename:    consumerConfig.queue.DLQ,
+		Retries:      oneRetry,
+	})
+
 	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
 
 	if ok := <-dlqQueuesReady; !ok {
 		t.Fatal("Didnt bind DLQ")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
@@ -322,30 +266,17 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 	t.Parallel()
 
-	noTTL := int16(0)
-	noRetries := 0
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		SetNoRetries: true,
+	})
 
-	config := NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		"test-exchange-"+randomString(5),
-		Fanout,
-		"test-queue-"+randomString(5),
-		noPatterns,
-		&testLogger{t: t},
-		noTTL,
-		noRetries,
-		serviceName,
-	)
-
-	consumer := NewConsumer(config)
+	consumer := NewConsumer(consumerConfig)
 
 	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
@@ -374,29 +305,18 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 func TestPatterns(t *testing.T) {
 	t.Parallel()
 
-	patterns := []string{"A", "B"}
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
+		Patterns:     []string{"A", "B"},
+		ExchangeType: Topic,
+	})
 
-	config := NewConsumerConfig(
-		testRabbitURI,
-		"test-exchange-"+randomString(5),
-		Topic,
-		"test-queue-"+randomString(5),
-		patterns,
-		&testLogger{t: t},
-		testRequeueTTL,
-		testRequeueLimit,
-		serviceName,
-	)
-
-	consumer := NewConsumer(config)
+	consumer := NewConsumer(consumerConfig)
 
 	if ok := <-consumer.QueuesBound; !ok {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-
-	publish, publishReady := NewPublisher(publisherConfig)
+	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
 	if ok := <-publishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
@@ -458,4 +378,56 @@ func newDirectConsumer(config ConsumerConfig) (<-chan Message, <-chan bool) {
 	}()
 
 	return msgChannel, qBound
+}
+
+type consumerConfigOptions struct {
+	ExchangeType            ExchangeType
+	Patterns                []string
+	ExchangeName, Queuename string
+	Retries                 int
+	SetNoRetries            bool
+	RequeueTTL              int16
+}
+
+func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
+	if config.ExchangeType == "" {
+		config.ExchangeType = Fanout
+	}
+
+	if len(config.Patterns) == 0 {
+		config.Patterns = noPatterns
+	}
+
+	if config.ExchangeName == "" {
+		config.ExchangeName = "test-exchange-" + randomString(5)
+	}
+
+	if config.Queuename == "" {
+		config.Queuename = "test-queue-" + randomString(5)
+	}
+
+	if config.Retries == 0 {
+		config.Retries = testRequeueLimit
+	}
+
+	if config.RequeueTTL == 0 {
+		config.RequeueTTL = testRequeueTTL
+	}
+
+	if config.SetNoRetries {
+		config.RequeueTTL = 0
+		config.Retries = 0
+	}
+
+	return NewConsumerConfig(
+		"amqp://guest:guest@rabbitmq:5672/",
+		config.ExchangeName,
+		config.ExchangeType,
+		config.Queuename,
+		config.Patterns,
+		&testLogger{t: t},
+		config.RequeueTTL,
+		config.Retries,
+		serviceName,
+	)
 }

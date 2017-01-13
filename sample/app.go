@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"time"
-	"log"
 	"github.com/mergermarket/run-amqp"
+	"log"
 	"net/http"
+	"time"
 )
 
 const numberOfWorkers = 3
 const exchangeName = "test-example-exchange"
+
 var noPatterns = []string{""}
 
 func main() {
@@ -61,7 +62,7 @@ func main() {
 	http.ListenAndServe(":8080", &svr)
 }
 
-type httpPublisher struct{
+type httpPublisher struct {
 	p runamqp.PublishFunc
 }
 
@@ -70,7 +71,7 @@ func (h *httpPublisher) ServeHTTP(http.ResponseWriter, *http.Request) {
 	h.p([]byte("Pokey"), "")
 }
 
-type logger struct {}
+type logger struct{}
 
 func (*logger) Info(x ...interface{}) {
 	log.Println(x)
@@ -85,7 +86,6 @@ func (*logger) Debug(x ...interface{}) {
 }
 
 type SampleHandler struct {
-
 }
 
 func (*SampleHandler) Name() string {

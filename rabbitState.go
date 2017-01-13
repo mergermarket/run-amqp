@@ -83,21 +83,21 @@ func (r *rabbitState) cleanupOldResources() {
 
 	if r.currentAmqpChannel != nil {
 		r.config.Logger.Debug("Closing channel", r.currentAmqpChannel)
-		if err := r.currentAmqpChannel.Close(); err != nil{
+		if err := r.currentAmqpChannel.Close(); err != nil {
 			r.config.Logger.Error(err)
 		} else {
-			r.currentAmqpChannel = nil;
+			r.currentAmqpChannel = nil
 			r.config.Logger.Debug("Closed channel")
 		}
 	}
 
 	if r.currentAmqpConnection != nil {
 		r.config.Logger.Debug("Closing connection", r.currentAmqpConnection)
-		if err := r.currentAmqpConnection.Close(); err != nil{
+		if err := r.currentAmqpConnection.Close(); err != nil {
 			r.config.Logger.Error(err)
 		} else {
 			r.currentAmqpConnection.ConnectionState()
-			r.currentAmqpConnection = nil;
+			r.currentAmqpConnection = nil
 			r.config.Logger.Debug("Closed connection")
 		}
 	}

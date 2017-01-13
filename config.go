@@ -45,6 +45,11 @@ type ConsumerConfig struct {
 	queue    queue
 }
 
+// NewPublisherConfig returns a PublisherConfig derived from the consumer config. This config can be used to create a Publisher to Publish to this consumer
+func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
+	return NewPublisherConfig(c.URL, c.exchange.Name, c.exchange.Type, c.Logger)
+}
+
 // NewPublisherConfig config for establishing a RabbitMq publisher
 func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) PublisherConfig {
 
