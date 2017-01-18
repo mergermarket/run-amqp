@@ -37,7 +37,7 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 	if pattern != "" {
 		p.config.Logger.Info("Published", string(msg), "with pattern", pattern)
 
-	}else {
+	} else {
 		p.config.Logger.Info("Published", string(msg))
 	}
 	return nil
