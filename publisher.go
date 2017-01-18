@@ -3,16 +3,23 @@ package runamqp
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"net/http"
 )
 
-type publisher struct {
+// Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
+type Publisher struct {
+	PublishReady chan bool
+
 	currentAmqpChannel *amqp.Channel
 	config             PublisherConfig
+	router             *http.ServeMux
 }
 
-func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *publisher {
-	p := new(publisher)
+func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *Publisher {
+	p := new(Publisher)
 	p.config = config
+	p.PublishReady = publishReady
+	p.router = http.NewServeMux()
 
 	go func() {
 		for ch := range channels {
@@ -25,7 +32,7 @@ func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publish
 }
 
 // Publish will publish a message to the configured exchange
-func (p *publisher) Publish(msg []byte, pattern string) error {
+func (p *Publisher) Publish(msg []byte, pattern string) error {
 	err := p.currentAmqpChannel.Publish(
 		p.config.exchange.Name,
 		pattern,
@@ -45,14 +52,10 @@ func (p *publisher) Publish(msg []byte, pattern string) error {
 	return nil
 }
 
-// PublishFunc is a method which will publish a method with optional pattern to an exchange
-type PublishFunc func(message []byte, pattern string) error
-
 // NewPublisher returns a function to send messages to the exchange defined in your config
-func NewPublisher(config PublisherConfig) (PublishFunc, <-chan bool) {
+func NewPublisher(config PublisherConfig) *Publisher {
 	publishReady := make(chan bool)
 	rabbitState := makeNewConnectedRabbit(config.connection, config.exchange)
 	p := newPublisher(rabbitState.newlyOpenedChannels, config, publishReady)
-
-	return p.Publish, publishReady
+	return p
 }

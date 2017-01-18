@@ -35,12 +35,12 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		t.Fatal("Didnt bind queues in time")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
-	if ok := <-publishReady; !ok {
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
-	err := publish(payload, "")
+	err := publisher.Publish(payload, "")
 
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -69,9 +69,9 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publishReady; !ok {
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
@@ -86,7 +86,7 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Didnt bind DLQ")
 	}
 
-	if err := publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -128,13 +128,13 @@ func TestRequeue(t *testing.T) {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publishReady; !ok {
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
-	if err := publish(payload, "all.notifications.bounced"); err != nil {
+	if err := publisher.Publish(payload, "all.notifications.bounced"); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -207,13 +207,13 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Didnt bind DLQ")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publishReady; !ok {
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
-	if err := publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -276,13 +276,13 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publishReady; !ok {
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
-	if err := publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -316,14 +316,14 @@ func TestPatterns(t *testing.T) {
 		t.Fatal("Didn't bind original queues")
 	}
 
-	publish, publishReady := NewPublisher(consumerConfig.NewPublisherConfig())
-	if ok := <-publishReady; !ok {
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	if ok := <-publisher.PublishReady; !ok {
 		t.Fatal("Is not ready to publish")
 	}
 
 	gotMessageForPattern := func(msg, pattern string) bool {
 
-		if err := publish([]byte(msg), pattern); err != nil {
+		if err := publisher.Publish([]byte(msg), pattern); err != nil {
 			t.Fatal("Error when Publishing the message")
 		}
 

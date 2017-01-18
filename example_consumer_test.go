@@ -55,17 +55,17 @@ func ExampleConsumer() {
 
 	// We can now publish to the same exchange for fun
 	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
-	publish, publishReady := NewPublisher(publisherConfig)
+	publisher := NewPublisher(publisherConfig)
 
-	// Let's check the publisher is ready too
+	// Let's check the Publisher is ready too
 	select {
-	case <-publishReady:
+	case <-publisher.PublishReady:
 	case <-time.After(10 * time.Second):
 		log.Fatal("Timed out waiting to set up rabbit")
 	}
 
 	// Publish a message
-	if err := publish([]byte("Hello, world"), ""); err != nil {
+	if err := publisher.Publish([]byte("Hello, world"), ""); err != nil {
 		log.Fatal("Error when Publishing the message")
 	}
 

@@ -43,32 +43,36 @@ func main() {
 	consumer.Process(handler, numberOfWorkers)
 
 	publisherConfig := runamqp.NewPublisherConfig(config.URL, exchangeName, runamqp.Fanout, &logger{})
-	publish, ready := runamqp.NewPublisher(publisherConfig)
+	publisher := runamqp.NewPublisher(publisherConfig)
 
 	select {
-	case <-ready:
+	case <-publisher.PublishReady:
 	case <-time.After(10 * time.Second):
 		log.Fatal("Timed out waiting to set up rabbit")
 	}
 
-	publish([]byte("1"), "")
-	publish([]byte("2"), "")
-	publish([]byte("3"), "")
+	publisher.Publish([]byte("1"), "")
+	publisher.Publish([]byte("2"), "")
+	publisher.Publish([]byte("3"), "")
 
-	svr := httpPublisher{publish}
+	svr := httpPublisher{publisher}
 
 	log.Println("Listening on 8080, hit it on / to publish a message and see what happens")
 
-	http.ListenAndServe(":8080", &svr)
+	err := http.ListenAndServe(":8080", &svr)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type httpPublisher struct {
-	p runamqp.PublishFunc
+	p *runamqp.Publisher
 }
 
 func (h *httpPublisher) ServeHTTP(http.ResponseWriter, *http.Request) {
 	log.Println("Going to try and publish....")
-	h.p([]byte("Pokey"), "")
+	h.p.Publish([]byte("Pokey"), "")
 }
 
 type logger struct{}

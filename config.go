@@ -50,7 +50,7 @@ func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
 	return NewPublisherConfig(c.URL, c.exchange.Name, c.exchange.Type, c.Logger)
 }
 
-// NewPublisherConfig config for establishing a RabbitMq publisher
+// NewPublisherConfig config for establishing a RabbitMq Publisher
 func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) PublisherConfig {
 
 	return PublisherConfig{
