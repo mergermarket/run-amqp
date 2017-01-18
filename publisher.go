@@ -70,7 +70,7 @@ func (p *Publisher) entry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = p.Publish(body, "")
+	err = p.Publish(body, r.URL.Query().Get("pattern"))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
