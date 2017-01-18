@@ -42,8 +42,7 @@ func main() {
 
 	consumer.Process(handler, numberOfWorkers)
 
-	publisherConfig := runamqp.NewPublisherConfig(config.URL, exchangeName, runamqp.Fanout, &logger{})
-	publisher := runamqp.NewPublisher(publisherConfig)
+	publisher := runamqp.NewPublisher(config.NewPublisherConfig())
 
 	select {
 	case <-publisher.PublishReady:
