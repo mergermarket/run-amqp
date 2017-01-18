@@ -55,7 +55,7 @@ func main() {
 	publisher.Publish([]byte("2"), "")
 	publisher.Publish([]byte("3"), "")
 
-	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange")
+	log.Println("Listening on 8080, POST /internal/rabit/entry {some body} to publish to the exchange or GET /internal/rabbit/up to see if rabbit is ready")
 
 	router := http.NewServeMux()
 	router.Handle("/internal/rabbit/", http.StripPrefix("/internal/rabbit", publisher))
