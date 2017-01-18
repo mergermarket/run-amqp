@@ -55,24 +55,23 @@ func main() {
 	publisher.Publish([]byte("2"), "")
 	publisher.Publish([]byte("3"), "")
 
-	svr := httpPublisher{publisher}
+	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange")
 
-	log.Println("Listening on 8080, hit it on / to publish a message and see what happens")
+	router := http.NewServeMux()
+	router.Handle("/internal/rabbit/", http.StripPrefix("/internal/rabbit", publisher))
+	router.Handle("/brett", brett{})
 
-	err := http.ListenAndServe(":8080", &svr)
+	err := http.ListenAndServe(":8080", router)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-type httpPublisher struct {
-	p *runamqp.Publisher
-}
+type brett struct{}
 
-func (h *httpPublisher) ServeHTTP(http.ResponseWriter, *http.Request) {
-	log.Println("Going to try and publish....")
-	h.p.Publish([]byte("Pokey"), "")
+func (brett) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "hi brett")
 }
 
 type logger struct{}
