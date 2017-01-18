@@ -97,8 +97,8 @@ func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publish
 	go func() {
 		for ch := range channels {
 			p.currentAmqpChannel = ch
-			publishReady <- true
 			p.publisherReady = true
+			publishReady <- true
 		}
 	}()
 
