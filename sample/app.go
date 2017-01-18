@@ -17,7 +17,7 @@ func main() {
 
 	fmt.Println("Run amqp test bench")
 
-	config := runamqp.NewConsumerConfig(
+	consumerConfig := runamqp.NewConsumerConfig(
 		"amqp://guest:guest@rabbitmq:5672/",
 		exchangeName,
 		runamqp.Fanout,
@@ -29,7 +29,7 @@ func main() {
 		"sample-app",
 	)
 
-	consumer := runamqp.NewConsumer(config)
+	consumer := runamqp.NewConsumer(consumerConfig)
 
 	select {
 	case <-consumer.QueuesBound:
@@ -42,7 +42,7 @@ func main() {
 
 	consumer.Process(handler, numberOfWorkers)
 
-	publisher := runamqp.NewPublisher(config.NewPublisherConfig())
+	publisher := runamqp.NewPublisher(consumerConfig.NewPublisherConfig())
 
 	select {
 	case <-publisher.PublishReady:

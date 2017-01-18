@@ -31,6 +31,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 
 	select {
 	case <-consumer.QueuesBound:
+		t.Log("carry on...")
 	case <-time.After(5 * time.Second):
 		t.Fatal("Didnt bind queues in time")
 	}

@@ -52,6 +52,11 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (p *Publisher) entry(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == http.MethodGet {
+		fmt.Fprint(w, "https://github.com/mergermarket/run-amqp/issues/10")
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "POST PLZ", http.StatusMethodNotAllowed)
 		return
