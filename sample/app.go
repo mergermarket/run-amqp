@@ -95,5 +95,5 @@ func (*SampleHandler) Name() string {
 }
 
 func (*SampleHandler) Handle(msg runamqp.Message) {
-	log.Println("Got message", string(msg.Body()))
+	log.Println("Sample handler got message", string(msg.Body()))
 }

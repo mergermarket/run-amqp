@@ -34,7 +34,12 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 		return fmt.Errorf("failed to publish message with error: %s", err.Error())
 	}
 
-	p.config.Logger.Info("Published", string(msg))
+	if pattern != "" {
+		p.config.Logger.Info("Published", string(msg), "with pattern", pattern)
+
+	}else {
+		p.config.Logger.Info("Published", string(msg))
+	}
 	return nil
 }
 
