@@ -90,7 +90,7 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 		queue: queue{
 			Name:       queueName,
 			DLQ:        queueName + "-dlq",
-			RetryLater: fmt.Sprintf("%s-for-%s-retry-%dms-later", queueName, serviceName, requeueTTL),
+			RetryLater: fmt.Sprintf("%s-retry-%dms-later", queueName, requeueTTL),
 			RequeueTTL: requeueTTL,
 			RetryLimit: requeueLimit,
 			Patterns:   patterns,
