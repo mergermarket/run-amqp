@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+//todo: we really aught to test the config in terms of the "auto" queue/exchange name things
+
 type logger interface {
 	Info(...interface{})
 	Error(...interface{})
@@ -80,15 +82,15 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 		},
 		exchange: exchange{
 			Name:       exchangeName,
-			RetryNow:   fmt.Sprintf("%s-bounced-retry-now", exchangeName),
-			RetryLater: fmt.Sprintf("%s-bounced-retry-%dms-later", exchangeName, requeueTTL),
+			RetryNow:   fmt.Sprintf("%s-retry-now", exchangeName),
+			RetryLater: fmt.Sprintf("%s-retry-%dms-later", exchangeName, requeueTTL),
 			DLE:        fmt.Sprintf("%s-%s-dle", exchangeName, serviceName),
 			Type:       exchangeType,
 		},
 		queue: queue{
 			Name:       queueName,
 			DLQ:        queueName + "-dlq",
-			RetryLater: fmt.Sprintf("%s-bounced-retry-%dms-later", queueName, requeueTTL),
+			RetryLater: fmt.Sprintf("%s-retry-%dms-later", queueName, requeueTTL),
 			RequeueTTL: requeueTTL,
 			RetryLimit: requeueLimit,
 			Patterns:   patterns,
