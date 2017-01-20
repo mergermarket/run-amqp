@@ -21,7 +21,7 @@ func init() {
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-var noPatterns = []string{""}
+var noPatterns = []string{}
 
 func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()

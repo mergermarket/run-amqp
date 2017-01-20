@@ -49,3 +49,48 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 		t.Error("Expected", expectedRetryLaterQueueName, "but got", consumerConfig.queue.RetryLater)
 	}
 }
+
+func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
+	consumerConfig := NewConsumerConfig(
+		testRabbitURI,
+		"exchange",
+		Fanout,
+		"queue",
+		noPatterns,
+		&testLogger{t: t},
+		200,
+		testRequeueLimit,
+		"service",
+	)
+
+	if len(consumerConfig.queue.Patterns) != 1 {
+		t.Fatal("When there are no patterns supplied it should've put one in")
+	}
+
+	if consumerConfig.queue.Patterns[0] != "#" {
+		t.Error("Config should set the pattern to # (for catch all) if none are supplied but got", consumerConfig.queue.Patterns)
+	}
+}
+
+func TestItSetsPatternsOnQueue(t *testing.T) {
+	pattern := "pretty.pattern"
+	consumerConfig := NewConsumerConfig(
+		testRabbitURI,
+		"exchange",
+		Fanout,
+		"queue",
+		[]string{pattern},
+		&testLogger{t: t},
+		200,
+		testRequeueLimit,
+		"service",
+	)
+
+	if len(consumerConfig.queue.Patterns) != 1 {
+		t.Fatal("There should be one pattern set")
+	}
+
+	if consumerConfig.queue.Patterns[0] != pattern {
+		t.Error("Unexpected pattern, expected", pattern, "but got", consumerConfig.queue.Patterns[0])
+	}
+}
