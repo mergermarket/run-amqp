@@ -80,9 +80,9 @@ func TestDLQ(t *testing.T) {
 		ExchangeName: consumerConfig.exchange.DLE,
 	})
 
-	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
+	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqQueuesReady; !ok {
+	if ok := <-dlqConsumer.QueuesBound; !ok {
 		t.Fatal("Didnt bind DLQ")
 	}
 
@@ -98,7 +98,7 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Error when Nacking the message")
 	}
 
-	dlqMessage := <-dlqConsumer
+	dlqMessage := <-dlqConsumer.Messages
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
@@ -358,25 +358,6 @@ func randomString(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
-}
-
-func newDirectConsumer(config ConsumerConfig) (<-chan Message, <-chan bool) {
-	msgChannel := make(chan Message)
-	qBound := make(chan bool)
-
-	go func() {
-		rabbit := makeNewConnectedRabbit(config.connection, config.exchange)
-		for ch := range rabbit.newlyOpenedChannels {
-			err := consumeQueue(ch, config, msgChannel)
-			if err != nil {
-				qBound <- false
-			} else {
-				qBound <- true
-			}
-		}
-	}()
-
-	return msgChannel, qBound
 }
 
 type consumerConfigOptions struct {
