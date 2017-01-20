@@ -8,7 +8,7 @@ import (
 
 func TestWorkerPool(t *testing.T) {
 	poolCount := &workerPoolCount{}
-	handler := &testHandler{workerPoolCount:poolCount}
+	handler := &testHandler{workerPoolCount: poolCount}
 	messages := make(chan Message, 10)
 	numberOfJobs := 10
 	maxWorkers := 2
@@ -25,7 +25,7 @@ func TestWorkerPool(t *testing.T) {
 		t.Error("Handler was not called enough times, expect 10 but got", handler.invocations)
 	}
 
-	if poolCount.max != maxWorkers{
+	if poolCount.max != maxWorkers {
 		t.Error("Expected max workers of", maxWorkers, "but got", poolCount.max)
 	}
 }
@@ -40,7 +40,7 @@ func (w *workerPoolCount) incr() {
 	defer w.Unlock()
 
 	w.currentRunning++
-	if w.currentRunning>=w.max{
+	if w.currentRunning >= w.max {
 		w.max = w.currentRunning
 	}
 }
