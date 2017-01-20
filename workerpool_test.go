@@ -64,11 +64,11 @@ func (*testHandler) Name() string {
 
 func (w *testHandler) Handle(msg Message) {
 	w.workerPoolCount.incr()
-	time.Sleep(10 * time.Millisecond)
 	defer w.workerPoolCount.decr()
 
 	w.Lock()
 	defer w.Unlock()
 
+	time.Sleep(10 * time.Millisecond)
 	w.invocations++
 }
