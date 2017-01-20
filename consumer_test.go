@@ -200,9 +200,9 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		Retries:      oneRetry,
 	})
 
-	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
+	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqQueuesReady; !ok {
+	if ok := <-dlqConsumer.QueuesBound; !ok {
 		t.Fatal("Didnt bind DLQ")
 	}
 
@@ -249,7 +249,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message for the second time")
 	}
 
-	dlqMessage := <-dlqConsumer
+	dlqMessage := <-dlqConsumer.Messages
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
