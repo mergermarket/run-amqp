@@ -7,10 +7,17 @@ import (
 )
 
 func TestWorkerPool(t *testing.T) {
-	poolCount := &workerPoolCount{}
-	handler := &testHandler{workerPoolCount: poolCount}
-	messages := make(chan Message, 10)
 	numberOfJobs := 10
+
+	poolCount := &workerPoolCount{}
+
+	handler := &testHandler{
+		workerPoolCount: poolCount,
+		finished:        make(chan bool),
+		maxInvocations:  numberOfJobs,
+	}
+
+	messages := make(chan Message, 10)
 	maxWorkers := 2
 
 	startWorkers(messages, handler, maxWorkers, &testLogger{t})
@@ -19,7 +26,7 @@ func TestWorkerPool(t *testing.T) {
 		messages <- NewStubMessage("foo", 5*time.Second)
 	}
 
-	time.Sleep(1 * time.Second) // this blows
+	<-handler.finished
 
 	if handler.invocations != numberOfJobs {
 		t.Error("Handler was not called enough times, expect 10 but got", handler.invocations)
@@ -55,7 +62,8 @@ func (w *workerPoolCount) decr() {
 type testHandler struct {
 	workerPoolCount *workerPoolCount
 	sync.Mutex
-	invocations int
+	invocations, maxInvocations int
+	finished                    chan bool
 }
 
 func (*testHandler) Name() string {
@@ -71,4 +79,8 @@ func (w *testHandler) Handle(msg Message) {
 
 	time.Sleep(10 * time.Millisecond)
 	w.invocations++
+
+	if w.invocations == w.maxInvocations {
+		w.finished <- true
+	}
 }
