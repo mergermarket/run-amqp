@@ -9,7 +9,7 @@ import (
 )
 
 const numberOfWorkers = 3
-const exchangeName = "test-example-exchange"
+const exchangeName = "producer-messages"
 
 var noPatterns = []string{""}
 
