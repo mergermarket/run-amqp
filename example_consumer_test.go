@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"time"
 )
@@ -29,7 +30,7 @@ func ExampleConsumer() {
 		"test-example-exchange",
 		Fanout,
 		noPatterns,
-		&exampleLogger{},
+		&SimpleLogger{ioutil.Discard},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,
@@ -74,9 +75,3 @@ func ExampleConsumer() {
 	fmt.Print(handler.calledWith)
 	// Output: Hello, world
 }
-
-type exampleLogger struct{}
-
-func (e *exampleLogger) Debug(msgs ...interface{}) {}
-func (*exampleLogger) Error(msgs ...interface{})   {}
-func (*exampleLogger) Info(msgs ...interface{})    {}

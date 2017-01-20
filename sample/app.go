@@ -4,6 +4,7 @@ import (
 	"github.com/mergermarket/run-amqp"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func main() {
 		exchangeName,
 		runamqp.Fanout,
 		noPatterns,
-		&logger{},
+		&runamqp.SimpleLogger{os.Stdout},
 		requeueTTL,
 		requeueLimit,
 		serviceName,
@@ -62,20 +63,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-type logger struct{}
-
-func (*logger) Info(x ...interface{}) {
-	log.Println(x)
-}
-
-func (*logger) Error(x ...interface{}) {
-	log.Println(x)
-}
-
-func (*logger) Debug(x ...interface{}) {
-	log.Println(x)
 }
 
 type SampleHandler struct {
