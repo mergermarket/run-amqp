@@ -73,7 +73,7 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 		patterns = append(patterns, "#") //testme
 	}
 
-	queueName := fmt.Sprintf("%s-for-%s-queue", exchangeName, serviceName)
+	queueName := fmt.Sprintf("%s-for-%s", exchangeName, serviceName)
 
 	return ConsumerConfig{
 		connection: connection{
