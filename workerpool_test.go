@@ -1,14 +1,13 @@
 package runamqp
 
 import (
+	"sync"
 	"testing"
 	"time"
-	"sync"
 )
 
-
 type testHandler struct {
-	sync sync.RWMutex
+	sync        sync.RWMutex
 	invocations int
 }
 
@@ -30,14 +29,13 @@ func TestWorkerPool(t *testing.T) {
 
 	startWorkers(messages, handler, 2, &testLogger{t})
 
-
-	for i:=0; i<numberOfJobs; i++ {
+	for i := 0; i < numberOfJobs; i++ {
 		messages <- NewStubMessage("foo", 5*time.Second)
 	}
 
 	time.Sleep(1 * time.Second) // this blows
 
-	if handler.invocations != numberOfJobs{
+	if handler.invocations != numberOfJobs {
 		t.Error("Handler was not called enough times, expect 10 but got", handler.invocations)
 	}
 }
