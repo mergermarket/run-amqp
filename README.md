@@ -20,6 +20,10 @@ Check out into `$GOPATH/src/github.com/mergermarket/run-amqp`.
 
 `docker-compose run runamqp`
 
+Specific test
+
+`docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries`
+
 There is a test harness app in `sample` so you can play around with it a bit
 
 `docker-compose run --service-ports sampleapp`

@@ -78,12 +78,11 @@ func TestDLQ(t *testing.T) {
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
-		Queuename:    consumerConfig.queue.DLQ,
 	})
 
-	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
+	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqQueuesReady; !ok {
+	if ok := <-dlqConsumer.QueuesBound; !ok {
 		t.Fatal("Didnt bind DLQ")
 	}
 
@@ -99,7 +98,7 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Error when Nacking the message")
 	}
 
-	dlqMessage := <-dlqConsumer
+	dlqMessage := <-dlqConsumer.Messages
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
@@ -198,13 +197,12 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
-		Queuename:    consumerConfig.queue.DLQ,
 		Retries:      oneRetry,
 	})
 
-	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
+	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqQueuesReady; !ok {
+	if ok := <-dlqConsumer.QueuesBound; !ok {
 		t.Fatal("Didnt bind DLQ")
 	}
 
@@ -251,7 +249,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message for the second time")
 	}
 
-	dlqMessage := <-dlqConsumer
+	dlqMessage := <-dlqConsumer.Messages
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
@@ -362,32 +360,13 @@ func randomString(n int) string {
 	return string(b)
 }
 
-func newDirectConsumer(config ConsumerConfig) (<-chan Message, <-chan bool) {
-	msgChannel := make(chan Message)
-	qBound := make(chan bool)
-
-	go func() {
-		rabbit := makeNewConnectedRabbit(config.connection, config.exchange)
-		for ch := range rabbit.newlyOpenedChannels {
-			err := consumeQueue(ch, config, msgChannel)
-			if err != nil {
-				qBound <- false
-			} else {
-				qBound <- true
-			}
-		}
-	}()
-
-	return msgChannel, qBound
-}
-
 type consumerConfigOptions struct {
-	ExchangeType            ExchangeType
-	Patterns                []string
-	ExchangeName, Queuename string
-	Retries                 int
-	SetNoRetries            bool
-	RequeueTTL              int16
+	ExchangeType ExchangeType
+	Patterns     []string
+	ExchangeName string
+	Retries      int
+	SetNoRetries bool
+	RequeueTTL   int16
 }
 
 func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
@@ -401,10 +380,6 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 
 	if config.ExchangeName == "" {
 		config.ExchangeName = "test-exchange-" + randomString(5)
-	}
-
-	if config.Queuename == "" {
-		config.Queuename = "test-queue-" + randomString(5)
 	}
 
 	if config.Retries == 0 {
@@ -424,7 +399,6 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		"amqp://guest:guest@rabbitmq:5672/",
 		config.ExchangeName,
 		config.ExchangeType,
-		config.Queuename,
 		config.Patterns,
 		&testLogger{t: t},
 		config.RequeueTTL,
