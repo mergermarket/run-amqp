@@ -28,7 +28,6 @@ func ExampleConsumer() {
 		testRabbitURI,
 		"test-example-exchange",
 		Fanout,
-		"test-example-queue",
 		noPatterns,
 		&exampleLogger{},
 		testRequeueTTL,

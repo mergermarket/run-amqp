@@ -12,7 +12,6 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 		testRabbitURI,
 		"exchange",
 		Fanout,
-		"queue",
 		noPatterns,
 		logger,
 		200,
@@ -38,13 +37,13 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 		t.Error("Expected", expectedRetryLaterExchangeName, "but got", expectedRetryLaterExchangeName)
 	}
 
-	expectedDLQName := "queue-dlq"
+	expectedDLQName := "exchange-for-service-queue-dlq"
 
 	if consumerConfig.queue.DLQ != expectedDLQName {
 		t.Error("Expected", expectedDLQName, "but got", consumerConfig.queue.DLQ)
 	}
 
-	expectedRetryLaterQueueName := "queue-retry-200ms-later"
+	expectedRetryLaterQueueName := "exchange-for-service-queue-retry-200ms-later"
 	if consumerConfig.queue.RetryLater != expectedRetryLaterQueueName {
 		t.Error("Expected", expectedRetryLaterQueueName, "but got", consumerConfig.queue.RetryLater)
 	}
@@ -55,7 +54,6 @@ func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 		testRabbitURI,
 		"exchange",
 		Fanout,
-		"queue",
 		noPatterns,
 		&testLogger{t: t},
 		200,
@@ -78,7 +76,6 @@ func TestItSetsPatternsOnQueue(t *testing.T) {
 		testRabbitURI,
 		"exchange",
 		Fanout,
-		"queue",
 		[]string{pattern},
 		&testLogger{t: t},
 		200,

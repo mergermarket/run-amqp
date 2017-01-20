@@ -21,7 +21,6 @@ func main() {
 		"amqp://guest:guest@rabbitmq:5672/",
 		exchangeName,
 		runamqp.Fanout,
-		"test-example-queue",
 		noPatterns,
 		&logger{},
 		500,

@@ -78,7 +78,6 @@ func TestDLQ(t *testing.T) {
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
-		Queuename:    consumerConfig.queue.DLQ,
 	})
 
 	dlqConsumer, dlqQueuesReady := newDirectConsumer(dlqConfig)
@@ -198,7 +197,6 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
-		Queuename:    consumerConfig.queue.DLQ,
 		Retries:      oneRetry,
 	})
 
@@ -382,12 +380,12 @@ func newDirectConsumer(config ConsumerConfig) (<-chan Message, <-chan bool) {
 }
 
 type consumerConfigOptions struct {
-	ExchangeType            ExchangeType
-	Patterns                []string
-	ExchangeName, Queuename string
-	Retries                 int
-	SetNoRetries            bool
-	RequeueTTL              int16
+	ExchangeType ExchangeType
+	Patterns     []string
+	ExchangeName string
+	Retries      int
+	SetNoRetries bool
+	RequeueTTL   int16
 }
 
 func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
@@ -401,10 +399,6 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 
 	if config.ExchangeName == "" {
 		config.ExchangeName = "test-exchange-" + randomString(5)
-	}
-
-	if config.Queuename == "" {
-		config.Queuename = "test-queue-" + randomString(5)
 	}
 
 	if config.Retries == 0 {
@@ -424,7 +418,6 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		"amqp://guest:guest@rabbitmq:5672/",
 		config.ExchangeName,
 		config.ExchangeType,
-		config.Queuename,
 		config.Patterns,
 		&testLogger{t: t},
 		config.RequeueTTL,
