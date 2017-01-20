@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/mergermarket/run-amqp"
 	"log"
 	"net/http"
