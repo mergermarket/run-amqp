@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-//todo: we really aught to test the config in terms of the "auto" queue/exchange name things
-
 type logger interface {
 	Info(...interface{})
 	Error(...interface{})
