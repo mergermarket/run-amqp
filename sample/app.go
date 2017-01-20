@@ -10,29 +10,31 @@ import (
 
 const numberOfWorkers = 3
 const exchangeName = "producer-messages"
+const requeueTTL = 500
+const requeueLimit = 5
+const serviceName = "sample-app"
+const amqpURL = "amqp://guest:guest@rabbitmq:5672/"
 
 var noPatterns = []string{""}
 
 func main() {
 
-	fmt.Println("Run amqp test bench")
-
 	consumerConfig := runamqp.NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
+		amqpURL,
 		exchangeName,
 		runamqp.Fanout,
 		noPatterns,
 		&logger{},
-		500,
-		5,
-		"sample-app",
+		requeueTTL,
+		requeueLimit,
+		serviceName,
 	)
 
 	consumer := runamqp.NewConsumer(consumerConfig)
 
 	select {
 	case <-consumer.QueuesBound:
-		log.Println("Connected!")
+		log.Println("Waiting for messages")
 	case <-time.After(10 * time.Second):
 		log.Fatal("Timed out waiting to set up rabbit")
 	}
@@ -45,6 +47,7 @@ func main() {
 
 	select {
 	case <-publisher.PublishReady:
+		log.Println("Publisher ready")
 	case <-time.After(10 * time.Second):
 		log.Fatal("Timed out waiting to set up rabbit")
 	}
@@ -53,23 +56,13 @@ func main() {
 	publisher.Publish([]byte("2"), "")
 	publisher.Publish([]byte("3"), "")
 
-	log.Println("Listening on 8080, POST /internal/rabit/entry {some body} to publish to the exchange or GET /internal/rabbit/up to see if rabbit is ready")
+	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange or GET /up to see if rabbit is ready")
 
-	router := http.NewServeMux()
-	router.Handle("/internal/rabbit/", http.StripPrefix("/internal/rabbit", publisher))
-	router.Handle("/brett", brett{})
-
-	err := http.ListenAndServe(":8080", router)
+	err := http.ListenAndServe(":8080", publisher)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-type brett struct{}
-
-func (brett) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "hi brett")
 }
 
 type logger struct{}
@@ -95,4 +88,5 @@ func (*SampleHandler) Name() string {
 
 func (*SampleHandler) Handle(msg runamqp.Message) {
 	log.Println("Sample handler got message", string(msg.Body()))
+	msg.Ack()
 }
