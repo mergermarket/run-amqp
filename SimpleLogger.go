@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// SimpleLogger is a simple implementation of Logger which sends messages to a file
+// SimpleLogger is a simple implementation of Logger which sends messages to an io.Writer
 type SimpleLogger struct {
 	Out io.Writer
 }
