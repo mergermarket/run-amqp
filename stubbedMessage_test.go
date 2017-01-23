@@ -39,6 +39,10 @@ func TestItRecordsNacks(t *testing.T) {
 		t.Error("Expect nack count to be 1")
 	}
 
+	if !msg.NackedOnce() {
+		t.Error("Expected to be nacked once")
+	}
+
 	if msg.Calls.Nack[0] != "poo" {
 		t.Error("Expected nack reason to be recorded")
 	}

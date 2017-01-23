@@ -46,7 +46,7 @@ func (s *StubMessage) NackedOnce() bool {
 	return len(s.Calls.Nack) == 1
 }
 
-// NewStubMessage returns you a StubMessage. The timeout is for the Get* methods which check to see if functions are called in an asynchonous environment
+// NewStubMessage returns you a StubMessage. It has methods to help you make assertions on how your program interacts with a message
 func NewStubMessage(msg string) *StubMessage {
 	s := new(StubMessage)
 	s.message = msg
