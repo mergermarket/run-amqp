@@ -31,7 +31,7 @@ func TestConsumerProcessesMessages(t *testing.T) {
 
 	consumer.Process(handler, 5)
 
-	msg := NewStubMessage("hello, world", 5*time.Millisecond)
+	msg := NewStubMessage("hello, world")
 	messages <- msg
 
 	time.Sleep(10 * time.Millisecond)

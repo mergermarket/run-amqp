@@ -2,8 +2,6 @@ package runamqp
 
 import (
 	"fmt"
-	"log"
-	"time"
 )
 
 // ExampleHandlerToTest is to show how you can test your handler using StubMessage
@@ -24,19 +22,13 @@ func ExampleStubMessage() {
 	handler := &ExampleHandlerToTest{}
 
 	// An example message you want to test your system against
-	msg := NewStubMessage("Some payload", 50*time.Millisecond)
+	msg := NewStubMessage("Some payload")
 
 	// Run your handler
 	handler.Handle(msg)
 
 	// Check it did what you want
-	ackCalled, timeout := msg.GetAckCalled()
-
-	if timeout != nil {
-		log.Fatal(timeout)
-	}
-
-	if ackCalled {
+	if msg.AckedOnce() {
 		fmt.Print("It acked just like we expected")
 	}
 

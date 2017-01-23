@@ -23,7 +23,7 @@ func TestWorkerPool(t *testing.T) {
 	startWorkers(messages, handler, maxWorkers, &testLogger{t})
 
 	for i := 0; i < numberOfJobs; i++ {
-		messages <- NewStubMessage("foo", 5*time.Second)
+		messages <- NewStubMessage("foo")
 	}
 
 	<-handler.finished
