@@ -8,7 +8,7 @@
 #include "textflag.h"
 
 //
-// System call support for ARM, Darwin
+// System calledWith support for ARM, Darwin
 //
 
 // Just jump to package syscall's implementation for all these functions.

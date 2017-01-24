@@ -1,55 +1,135 @@
 package runamqp
 
+import "fmt"
+
 // StubMessage should be used for your tests to stub out a message coming into your system.
-type StubMessage struct {
-	message string
-	Calls   *StubMessageCalls
+type StubMessage interface {
+	// Body - returns the message you passed into NewStubMessage
+	Body() []byte
+
+	// Ack - acknowledge the message and return and error on failure
+	Ack() error
+
+	// Nack - sends the message to the Deadletter exchange with reason and returns error on failure
+	Nack(reason string) error
+
+	// Requeue - re-queues the message with reason and returns error on failure
+	Requeue(reason string) error
+
+	// AckCalled- returns true if Ack is called for the first time
+	AckCalled() bool
+
+	// NackCalled - returns true when Nack is only called once and the message is not previously Acked or Requeued
+	NackCalled() bool
+
+	// NackedWith - returns true if Nack was called with expected value
+	NackedWith(expectedValue string) bool
+
+	// RequeueCalled - returns true when Requeue was called only once and the message is not previously Acked or Nacked
+	RequeueCalled() bool
+
+	// RequeuedWith - returns true if Requeue was called with expectedValue
+	RequeuedWith(expectedValue string) bool
 }
 
-// StubMessageCalls records message calls such as Ack
-type StubMessageCalls struct {
-	AckCount int
-	Nack     []string
-	Requeue  []string
+// stubMessage should be used for your tests to stub out a message coming into your system.
+type stubMessage struct {
+	message string
+	calls   *stubMessageCalls
+}
+
+// stubMessageCalls records message calls such as Ack
+type stubMessageCalls struct {
+	ackCalled     bool
+	nackCalled    bool
+	nackReason    string
+	requeueCalled bool
+	requeueReason string
 }
 
 // Body returns the message you passed into NewStubMessage
-func (s *StubMessage) Body() []byte {
+func (s *stubMessage) Body() []byte {
 	return []byte(s.message)
 }
 
 // Ack ...
-func (s *StubMessage) Ack() error {
-	s.Calls.AckCount++
+func (s *stubMessage) Ack() error {
+	if s.calls.requeueCalled {
+		return fmt.Errorf("You cannot Ack a message that is previously been Requeued.")
+	}
+	if s.calls.nackCalled {
+		return fmt.Errorf("You cannot Ack a message that is previously been Nacked.")
+	}
+	if s.calls.ackCalled {
+		return fmt.Errorf("You cannot Ack a message that is previously been Acked.")
+	}
+	s.calls.ackCalled = true
 	return nil
 }
 
-// Nack ...
-func (s *StubMessage) Nack(reason string) error {
-	s.Calls.Nack = append(s.Calls.Nack, reason)
+// nackCalls ...
+func (s *stubMessage) Nack(reason string) error {
+	if s.calls.ackCalled {
+		return fmt.Errorf("You cannot Nack a message that is previously been Acked.")
+	}
+	if s.calls.requeueCalled {
+		return fmt.Errorf("You cannot Nack a message that is previously been Requeued.")
+	}
+	if s.calls.nackCalled {
+		return fmt.Errorf("You cannot Nack a message that is previously been Nacked.")
+	}
+
+	s.calls.nackCalled = true
+	s.calls.nackReason = reason
 	return nil
 }
 
-// Requeue will obviously not "really" requeue!
-func (s *StubMessage) Requeue(reason string) error {
-	s.Calls.Requeue = append(s.Calls.Requeue, reason)
+// requeueCalls will obviously not "really" requeue!
+func (s *stubMessage) Requeue(reason string) error {
+	if s.calls.ackCalled {
+		return fmt.Errorf("You cannot Requeue a message that is previously been Acked.")
+	}
+	if s.calls.nackCalled {
+		return fmt.Errorf("You cannot Requeue a message that is previously been Nacked.")
+	}
+	if s.calls.requeueCalled {
+		return fmt.Errorf("You cannot Requeue a message that is previously been Re-queued.")
+	}
+
+	s.calls.requeueCalled = true
+	s.calls.requeueReason = reason
 	return nil
 }
 
-// AckedOnce returns true when ack was called once on this message
-func (s *StubMessage) AckedOnce() bool {
-	return s.Calls.AckCount == 1
+// AckCalled returns true if Ack is called successfully on the message
+func (s *stubMessage) AckCalled() bool {
+	return s.calls.ackCalled
 }
 
-// NackedOnce returns true when nack was called once on this message
-func (s *StubMessage) NackedOnce() bool {
-	return len(s.Calls.Nack) == 1
+// NackCalled returns true when nack was called once on this message
+func (s *stubMessage) NackCalled() bool {
+	return s.calls.nackCalled
 }
 
-// NewStubMessage returns you a StubMessage. It has methods to help you make assertions on how your program interacts with a message
-func NewStubMessage(msg string) *StubMessage {
-	s := new(StubMessage)
+// NackedWith returns true when nack was called with given value
+func (s *stubMessage) NackedWith(expectedValue string) bool {
+	return s.calls.nackCalled && s.calls.nackReason == expectedValue
+}
+
+// RequeueCalled returns true when requeue was called once on this message
+func (s *stubMessage) RequeueCalled() bool {
+	return s.calls.requeueCalled
+}
+
+// RequeuedWith returns true when requeue was called with given value
+func (s *stubMessage) RequeuedWith(expectedValue string) bool {
+	return s.calls.requeueCalled && s.calls.requeueReason == expectedValue
+}
+
+// NewStubMessage returns you a stubMessage. It has methods to help you make assertions on how your program interacts with a message
+func NewStubMessage(msg string) StubMessage {
+	s := new(stubMessage)
 	s.message = msg
-	s.Calls = &StubMessageCalls{}
+	s.calls = &stubMessageCalls{}
 	return s
 }

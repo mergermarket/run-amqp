@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 #
-# Generate system call table for Darwin from sys/syscall.h
+# Generate system calledWith table for Darwin from sys/syscall.h
 
 use strict;
 

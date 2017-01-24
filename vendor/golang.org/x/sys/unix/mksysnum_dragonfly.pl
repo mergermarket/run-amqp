@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 #
-# Generate system call table for DragonFly from master list
+# Generate system calledWith table for DragonFly from master list
 # (for example, /usr/src/sys/kern/syscalls.master).
 
 use strict;

@@ -7,7 +7,7 @@
 #include "textflag.h"
 
 //
-// System call support for ARM, FreeBSD
+// System calledWith support for ARM, FreeBSD
 //
 
 // Just jump to package syscall's implementation for all these functions.

@@ -31,7 +31,7 @@ Things not intended to be supported.
   * Auto reconnect and re-synchronization of client and server topologies.
     * Reconnection would require understanding the error paths when the
       topology cannot be declared on reconnect.  This would require a new set
-      of types and code paths that are best suited at the call-site of this
+      of types and code paths that are best suited at the calledWith-site of this
       package.  AMQP has a dynamic topology that needs all peers to agree. If
       this doesn't happen, the behavior is undefined.  Instead of producing a
       possible interface with undefined behavior, this package is designed to

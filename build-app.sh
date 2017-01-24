@@ -19,6 +19,7 @@ gometalinter \
 	--disable=gotype \
 	--disable=unconvert \
 	--disable=aligncheck \
+	--disable=gas \
 	--cyclo-over=20 \
 	--tests \
 	--deadline=20s

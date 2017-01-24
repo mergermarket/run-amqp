@@ -4,7 +4,7 @@
 # license that can be found in the LICENSE file.
 
 # This program reads a file containing function prototypes
-# (like syscall_solaris.go) and generates system call bodies.
+# (like syscall_solaris.go) and generates system calledWith bodies.
 # The prototypes are marked by lines beginning with "//sys"
 # and read like func declarations if //sys is replaced by func, but:
 #	* The parameter lists must give a name for each argument.
@@ -96,12 +96,12 @@ while(<>) {
 		$modname = "libc";
 	}
 
-	# System call name.
+	# System calledWith name.
 	if($sysname eq "") {
 		$sysname = "$func";
 	}
 
-	# System call pointer variable name.
+	# System calledWith pointer variable name.
 	my $sysvarname = "proc$sysname";
 
 	my $strconvfunc = "BytePtrFromString";
@@ -193,12 +193,12 @@ while(<>) {
 			push @args, "0";
 		}
 	} else {
-		print STDERR "$ARGV:$.: too many arguments to system call\n";
+		print STDERR "$ARGV:$.: too many arguments to system calledWith\n";
 	}
 
-	# Actual call.
+	# Actual calledWith.
 	my $args = join(', ', @args);
-	my $call = "$asm(uintptr(unsafe.Pointer(&$sysvarname)), $nargs, $args)";
+	my $calledWith = "$asm(uintptr(unsafe.Pointer(&$sysvarname)), $nargs, $args)";
 
 	# Assign return values.
 	my $body = "";
@@ -239,9 +239,9 @@ while(<>) {
 		}
 	}
 	if ($ret[0] eq "_" && $ret[1] eq "_" && $ret[2] eq "_") {
-		$text .= "\t$call\n";
+		$text .= "\t$calledWith\n";
 	} else {
-		$text .= "\t$ret[0], $ret[1], $ret[2] := $call\n";
+		$text .= "\t$ret[0], $ret[1], $ret[2] := $calledWith\n";
 	}
 	foreach my $use (@uses) {
 		$text .= "\t$use\n";

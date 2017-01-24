@@ -32,7 +32,7 @@ func (m *amqpMessage) Ack() error {
 	return m.delivery.Ack(false)
 }
 
-// Nack is used when you cant process a message. The "reason" will appear in the rabbit console under the message headers which is useful for debugging
+// nackCalls is used when you cant process a message. The "reason" will appear in the rabbit console under the message headers which is useful for debugging
 func (m *amqpMessage) Nack(reason string) error {
 
 	err := m.Ack()
@@ -55,7 +55,7 @@ func (m *amqpMessage) Nack(reason string) error {
 	return err
 }
 
-// Requeue requeues a message, which is useful for when you have transient problems
+// requeueCalls requeues a message, which is useful for when you have transient problems
 func (m *amqpMessage) Requeue(reason string) error {
 
 	if m.retryLimit > 0 {

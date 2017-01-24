@@ -2,7 +2,7 @@
 package runamqp
 
 /*
-When you create a consumer you will recieve a read-only channel of *Messages which you can then process and then run the standard AMQP commands like Ack, Nack, etc.
+When you create a consumer you will recieve a read-only channel of *Messages which you can then process and then run the standard AMQP commands like Ack, nackCalls, etc.
 
 Producers allow you to publish content to an exchange with a routing key
 
