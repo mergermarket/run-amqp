@@ -1,6 +1,6 @@
 # run-amqp
 
-[![GoDoc](https://godoc.org/github.com/mergermarket/run-amqp?status.svg)](https://godoc.org/github.com/mergermarket/run-amqp)
+[![Build Status](https://travis-ci.org/mergermarket/run-amqp.svg?branch=master)](https://travis-ci.org/mergermarket/run-amqp)[![GoDoc](https://godoc.org/github.com/mergermarket/run-amqp?status.svg)](https://godoc.org/github.com/mergermarket/run-amqp)
 
 ![Run AMQP](http://i.imgur.com/ZOyxDrr.png)
 
