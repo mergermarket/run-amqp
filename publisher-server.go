@@ -2,9 +2,9 @@ package runamqp
 
 import (
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
-	"html/template"
 )
 
 type publisher interface {
@@ -16,8 +16,8 @@ type publisherServer struct {
 	router       *http.ServeMux
 	publisher    publisher
 	exchangeName string
-	form *template.Template
-	logger logger
+	form         *template.Template
+	logger       logger
 }
 
 func newPublisherServer(publisher publisher, exchangeName string, logger logger) *publisherServer {
@@ -55,7 +55,9 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		p.form.Execute(w, nil)
+		if err := p.form.Execute(w, nil); err != nil {
+			http.Error(w, fmt.Sprintf("Problem rendering templae %v", err), http.StatusInternalServerError)
+		}
 		return
 	}
 

@@ -36,7 +36,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = false
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodGet, "/up", nil)
@@ -53,7 +53,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = true
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodGet, "/up", nil)
@@ -70,7 +70,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = false
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodPost, "/entry", nil)
@@ -87,7 +87,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = true
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodGet, "/entry", nil)
@@ -108,7 +108,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = true
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodDelete, "/entry", strings.NewReader("some string"))
@@ -126,7 +126,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher.ready = true
 		publisher.err = fmt.Errorf("This should be returned on publisher.Publish")
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader("some string"))
@@ -143,7 +143,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = true
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 
@@ -181,7 +181,7 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		publisher := new(stubPublisher)
 		publisher.ready = true
 
-		publisherServer := newPublisherServer(publisher, testExchangeName)
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
 
 		w := httptest.NewRecorder()
 
