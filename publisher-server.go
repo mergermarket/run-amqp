@@ -1,12 +1,30 @@
 package runamqp
 
 import (
-	"net/http"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"log"
 )
 
-const entryBody = "https://github.com/mergermarket/run-amqp/issues/10"
+const entryBody = `<html>
+<head>
+<title></title>
+</head>
+
+<body>
+<form action="/entry" method="post">
+
+<input type="text" name="pattern" />
+<textarea name="message" ></textarea>
+
+<input type="submit" value="Send" />
+
+</form>
+
+</body>
+
+</html>`
 
 type publisher interface {
 	IsReady() bool
@@ -14,12 +32,12 @@ type publisher interface {
 }
 
 type publisherServer struct {
-	router *http.ServeMux
-	publisher publisher
+	router       *http.ServeMux
+	publisher    publisher
 	exchangeName string
 }
 
-func newPublisherServer(publisher publisher) *publisherServer{
+func newPublisherServer(publisher publisher) *publisherServer {
 	p := new(publisherServer)
 	p.publisher = publisher
 	p.router = http.NewServeMux()
@@ -51,15 +69,35 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	log.Println("headers", r.Header)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	r.ParseForm()
+	log.Println("form", r.Form)
+
+	var pattern string
+	var body []byte
+
+	if len(r.Form) > 0 {
+		pattern = r.Form.Get("pattern")
+		body = []byte(r.Form.Get("message"))
+	} else {
+
+		defer r.Body.Close()
+
+		b, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		body = b
+		pattern = r.URL.Query().Get("pattern")
+
 	}
 
-	err = p.publisher.Publish(body, r.URL.Query().Get("pattern"))
+	err := p.publisher.Publish(body, pattern)
+
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

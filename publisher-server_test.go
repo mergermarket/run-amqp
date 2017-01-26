@@ -1,11 +1,12 @@
 package runamqp
 
 import (
-	"testing"
-	"net/http/httptest"
-	"net/http"
-	"strings"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"net/url"
 )
 
 type stubPublisher struct {
@@ -21,7 +22,7 @@ func (s *stubPublisher) IsReady() bool {
 }
 
 func (s *stubPublisher) Publish(message []byte, pattern string) error {
-	s.publishCalled = true;
+	s.publishCalled = true
 	s.publishCalledWithMessage = string(message)
 	s.publishCalleWithPattern = pattern
 	return s.err
@@ -152,6 +153,46 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 		q := r.URL.Query()
 		q.Add("pattern", pattern)
 		r.URL.RawQuery = q.Encode()
+
+		publisherServer.ServeHTTP(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Error("expected", http.StatusOK, "but got", w.Code)
+		}
+
+		if !publisher.publishCalled {
+			t.Error("publisher.Publish should have been called but it was not")
+		}
+
+		if publisher.publishCalledWithMessage != message {
+			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
+		}
+
+		if publisher.publishCalleWithPattern != pattern {
+			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
+		}
+
+	})
+
+	t.Run("/entry should return 200 on POST when submitting form", func(t *testing.T) {
+
+		publisher := new(stubPublisher)
+		publisher.ready = true
+
+		publisherServer := newPublisherServer(publisher)
+
+		w := httptest.NewRecorder()
+
+		message := "some string"
+		pattern := "pattern"
+
+		form := url.Values{}
+		form.Add("pattern", pattern)
+		form.Add("message", message)
+
+		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(form.Encode()))
+
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		publisherServer.ServeHTTP(w, r)
 

@@ -44,7 +44,7 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 
 // IsReady return true when the publisher is ready to Publish
 func (p *Publisher) IsReady() bool {
-	return p.publisherReady;
+	return p.publisherReady
 }
 
 // NewPublisher returns a function to send messages to the exchange defined in your config
@@ -58,7 +58,6 @@ func NewPublisher(config PublisherConfig) *Publisher {
 func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.router.ServeHTTP(w, r)
 }
-
 
 func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *Publisher {
 	p := new(Publisher)
