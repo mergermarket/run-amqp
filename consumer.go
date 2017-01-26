@@ -65,15 +65,12 @@ func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig
 
 	err := addDleExchangeAndQueue(ch, config)
 
-	args := make(map[string]interface{})
-	args["x-dead-letter-exchange"] = config.exchange.DLE
-
 	if err != nil {
 		config.Logger.Error(err)
 		return err
 	}
 
-	err = assertAndBindQueue(ch, config.queue.Name, config.exchange.Name, config.queue.Patterns, args)
+	err = assertAndBindQueue(ch, config.queue.Name, config.exchange.Name, config.queue.Patterns, nil)
 
 	if err != nil {
 		config.Logger.Error(err)
