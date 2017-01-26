@@ -28,26 +28,32 @@ func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
 	return r
 }
 
-// https://github.com/streadway/amqp/issues/160
 func (r *rabbitState) connect() {
-
 	r.currentAmqpConnection = connectToRabbitMQ(r.config.URL, r.config.Logger)
 	r.createChannel()
-
-	err := makeExchange(r.currentAmqpChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
-	sendError(err, r.channelErrors)
-
+	r.createExchange()
 	r.notifyNewChannelOpened()
 }
 
+func (r *rabbitState) createExchange() {
+	err := makeExchange(r.currentAmqpChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
+	if err != nil {
+		err = fmt.Errorf("failed to create exchange %s, %v", r.exchangeConfig, err)
+		r.sendError(err)
+	}
+
+}
+
 func (r *rabbitState) createChannel() {
+	r.config.Logger.Debug("creating channel")
 	newChannel, err := r.currentAmqpConnection.Channel()
 
 	r.channelErrors = make(chan *amqp.Error)
 	go r.listenForChannelErrors()
 
 	newChannel.NotifyClose(r.channelErrors)
-	sendError(err, r.channelErrors)
+	r.config.Logger.Debug("creating channel - sending error", err)
+	r.sendError(err)
 
 	r.currentAmqpChannel = newChannel
 }
@@ -57,6 +63,7 @@ func (r *rabbitState) notifyNewChannelOpened() {
 }
 
 func (r *rabbitState) listenForChannelErrors() {
+	r.config.Logger.Debug("listening for channel errors")
 	for rabbitErr := range r.channelErrors {
 		if rabbitErr != nil {
 			r.config.Logger.Error("There was an error with channel", rabbitErr)
@@ -93,6 +100,24 @@ func (r *rabbitState) cleanupOldResources() {
 	r.config.Logger.Debug("Resources cleaned")
 }
 
+func (r *rabbitState) sendError(err error) {
+	defer func() {
+		if re := recover(); re != nil {
+			r.config.Logger.Error(fmt.Sprintf("Recovered from %v, with original error: [%v]", re, err))
+		}
+	}()
+
+	if err != nil {
+		if amqpErr, ok := err.(*amqp.Error); ok {
+			r.channelErrors <- amqpErr
+		} else {
+			r.channelErrors <- &amqp.Error{
+				Reason: err.Error(),
+			}
+		}
+	}
+}
+
 func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
 	attempts := 0
 	for {
@@ -112,17 +137,5 @@ func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
 		sleepDuration := time.Duration(int(millis)) * time.Second
 		logger.Info("Trying to reconnect to RabbitMQ at", uri, "after", sleepDuration)
 		time.Sleep(sleepDuration)
-	}
-}
-
-func sendError(err error, errChan chan *amqp.Error) {
-	if err != nil {
-		if amqpErr, ok := err.(*amqp.Error); ok {
-			errChan <- amqpErr
-		} else {
-			errChan <- &amqp.Error{
-				Reason: err.Error(),
-			}
-		}
 	}
 }

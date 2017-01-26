@@ -23,6 +23,10 @@ type exchange struct {
 	Type       ExchangeType
 }
 
+func (e exchange) String() string {
+	return fmt.Sprintf("name %s, type %s", e.Name, e.Type)
+}
+
 type queue struct {
 	Name       string
 	DLQ        string
