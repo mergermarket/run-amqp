@@ -3,7 +3,6 @@ package runamqp
 import (
 	"fmt"
 	"github.com/streadway/amqp"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -13,7 +12,7 @@ type Publisher struct {
 
 	currentAmqpChannel *amqp.Channel
 	config             PublisherConfig
-	router             *http.ServeMux
+	router             *publisherServer
 	publisherReady     bool
 }
 
@@ -43,6 +42,10 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 	return nil
 }
 
+func (p *Publisher) IsReady() bool {
+	return p.publisherReady;
+}
+
 // NewPublisher returns a function to send messages to the exchange defined in your config
 func NewPublisher(config PublisherConfig) *Publisher {
 	publishReady := make(chan bool)
@@ -55,54 +58,13 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.router.ServeHTTP(w, r)
 }
 
-func (p *Publisher) entry(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method == http.MethodGet {
-		fmt.Fprint(w, "https://github.com/mergermarket/run-amqp/issues/10")
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "POST PLZ", http.StatusMethodNotAllowed)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = p.Publish(body, r.URL.Query().Get("pattern"))
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintf(w, "Written body to exchange %s", p.config.exchange.Name)
-}
-
-func (p *Publisher) rabbitup(w http.ResponseWriter, r *http.Request) {
-	if p.publisherReady {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Rabbit is up!")
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Rabbit did not start up!")
-	}
-}
 
 func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *Publisher {
 	p := new(Publisher)
 	p.config = config
 	p.PublishReady = publishReady
 
-	p.router = http.NewServeMux()
-	p.router.HandleFunc("/entry", p.entry)
-	p.router.HandleFunc("/up", p.rabbitup)
+	p.router = newPublisherServer(p)
 
 	go func() {
 		for ch := range channels {
