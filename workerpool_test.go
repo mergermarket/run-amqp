@@ -37,6 +37,26 @@ func TestWorkerPool(t *testing.T) {
 	}
 }
 
+func TestWorkerPoolPanicDoesntBreakEverything(t *testing.T) {
+	messages := make(chan Message, 2)
+	startWorkers(messages, &panicyHandler{}, 1, &testLogger{t})
+	messages <- NewStubMessage("Hi")
+
+	time.Sleep(10 * time.Millisecond)
+	t.Log("It didnt die, hurrah")
+}
+
+type panicyHandler struct {
+}
+
+func (*panicyHandler) Handle(msg Message) {
+	panic("Oh nooooo")
+}
+
+func (*panicyHandler) Name() string {
+	return "I am very jumpy"
+}
+
 type workerPoolCount struct {
 	sync.Mutex
 	currentRunning, max int

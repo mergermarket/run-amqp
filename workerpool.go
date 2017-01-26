@@ -8,7 +8,6 @@ func startWorkers(work <-chan Message, handler MessageHandler, maxWorkers int, l
 	go func() {
 		for msg := range work {
 			tokens <- token{}
-
 			go func(newMessage Message) {
 				handler.Handle(newMessage)
 				<-tokens
