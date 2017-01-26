@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"fmt"
 	"github.com/streadway/amqp"
 	"math"
 	"time"
@@ -29,34 +30,37 @@ func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
 
 // https://github.com/streadway/amqp/issues/160
 func (r *rabbitState) connect() {
-	r.cleanupOldResources()
-
-	r.config.Logger.Info("Connecting to", r.config.URL)
 
 	r.currentAmqpConnection = connectToRabbitMQ(r.config.URL, r.config.Logger)
+	r.createChannel()
 
-	r.config.Logger.Info("Connected to", r.config.URL)
+	err := makeExchange(r.currentAmqpChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
+	sendError(err, r.channelErrors)
 
+	r.notifyNewChannelOpened()
+}
+
+func (r *rabbitState) createChannel() {
 	newChannel, err := r.currentAmqpConnection.Channel()
 
 	r.channelErrors = make(chan *amqp.Error)
-	go r.listenForChannelErrors(r.channelErrors)
+	go r.listenForChannelErrors()
 
 	newChannel.NotifyClose(r.channelErrors)
 	sendError(err, r.channelErrors)
 
-	err = makeExchange(newChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
-
-	sendError(err, r.channelErrors)
-
 	r.currentAmqpChannel = newChannel
-	r.newlyOpenedChannels <- newChannel
 }
 
-func (r *rabbitState) listenForChannelErrors(errors chan *amqp.Error) {
-	for rabbitErr := range errors {
+func (r *rabbitState) notifyNewChannelOpened() {
+	r.newlyOpenedChannels <- r.currentAmqpChannel
+}
+
+func (r *rabbitState) listenForChannelErrors() {
+	for rabbitErr := range r.channelErrors {
 		if rabbitErr != nil {
 			r.config.Logger.Error("There was an error with channel", rabbitErr)
+			r.cleanupOldResources()
 			r.connect()
 		}
 	}
@@ -92,6 +96,7 @@ func (r *rabbitState) cleanupOldResources() {
 func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
 	attempts := 0
 	for {
+		logger.Info("Connecting to", uri)
 		attempts++
 		conn, err := amqp.DialConfig(uri, amqp.Config{
 			Heartbeat: 30 * time.Second,
@@ -102,7 +107,7 @@ func connectToRabbitMQ(uri string, logger logger) *amqp.Connection {
 			return conn
 		}
 
-		logger.Error(err)
+		logger.Error(fmt.Errorf("problem connecting to %s, %v", uri, err))
 		millis := math.Exp2(float64(attempts))
 		sleepDuration := time.Duration(int(millis)) * time.Second
 		logger.Info("Trying to reconnect to RabbitMQ at", uri, "after", sleepDuration)
