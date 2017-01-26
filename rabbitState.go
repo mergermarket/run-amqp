@@ -10,6 +10,7 @@ type rabbitState struct {
 	currentAmqpConnection *amqp.Connection
 	currentAmqpChannel    *amqp.Channel
 	newlyOpenedChannels   chan *amqp.Channel
+	channelErrors         chan *amqp.Error
 	config                connection
 	exchangeConfig        exchange
 }
@@ -38,15 +39,15 @@ func (r *rabbitState) connect() {
 
 	newChannel, err := r.currentAmqpConnection.Channel()
 
-	channelErrors := make(chan *amqp.Error)
-	go r.listenForChannelErrors(channelErrors)
+	r.channelErrors = make(chan *amqp.Error)
+	go r.listenForChannelErrors(r.channelErrors)
 
-	newChannel.NotifyClose(channelErrors)
-	sendError(err, channelErrors)
+	newChannel.NotifyClose(r.channelErrors)
+	sendError(err, r.channelErrors)
 
 	err = makeExchange(newChannel, r.exchangeConfig.Name, r.exchangeConfig.Type)
 
-	sendError(err, channelErrors)
+	sendError(err, r.channelErrors)
 
 	r.currentAmqpChannel = newChannel
 	r.newlyOpenedChannels <- newChannel
