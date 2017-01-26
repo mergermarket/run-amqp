@@ -64,7 +64,7 @@ func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publish
 	p.config = config
 	p.PublishReady = publishReady
 
-	p.router = newPublisherServer(p)
+	p.router = newPublisherServer(p, config.exchange.Name)
 
 	go func() {
 		for ch := range channels {
