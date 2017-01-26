@@ -20,21 +20,13 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-var noPatterns = []string{}
-
 func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
 
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
 	consumer := NewConsumer(consumerConfig)
 
-	select {
-	case <-consumer.QueuesBound:
-		t.Log("carry on...")
-	case <-time.After(5 * time.Second):
-		t.Fatal("Didnt bind queues in time")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 	if ok := <-publisher.PublishReady; !ok {
@@ -47,7 +39,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	message := <-consumer.Messages
+	message := getMessage(t, consumer.Messages)
 
 	if string(message.Body()) != string(payload) {
 		t.Fatal("failed to publish")
@@ -66,15 +58,11 @@ func TestDLQ(t *testing.T) {
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
 	consumer := NewConsumer(consumerConfig)
 
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
+	assertReady(t, publisher.PublishReady)
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
@@ -82,15 +70,13 @@ func TestDLQ(t *testing.T) {
 
 	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqConsumer.QueuesBound; !ok {
-		t.Fatal("Didnt bind DLQ")
-	}
+	assertReady(t, dlqConsumer.QueuesBound)
 
 	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	message := <-consumer.Messages
+	message := getMessage(t, consumer.Messages)
 
 	rejectReason := "chris is poo"
 
@@ -98,7 +84,7 @@ func TestDLQ(t *testing.T) {
 		t.Fatal("Error when Nacking the message")
 	}
 
-	dlqMessage := <-dlqConsumer.Messages
+	dlqMessage := getMessage(t, dlqConsumer.Messages)
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
@@ -124,27 +110,17 @@ func TestRequeue(t *testing.T) {
 
 	consumer := NewConsumer(consumerConfig)
 
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
+	assertReady(t, publisher.PublishReady)
 
 	if err := publisher.Publish(payload, "all.notifications.bounced"); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	var publishedMessage Message
-	select {
-	case msg := <-consumer.Messages:
-		publishedMessage = msg
-	case <-time.After(1 * time.Second):
-		t.Fatal("Timedout waiting for the consumer")
-	}
+	publishedMessage := getMessage(t, consumer.Messages)
 
 	if publishedMessage == nil {
 		t.Fatal("Did not get the published message")
@@ -154,13 +130,7 @@ func TestRequeue(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message")
 	}
 
-	var requeuedMessage Message
-	select {
-	case reqMsg := <-consumer.Messages:
-		requeuedMessage = reqMsg
-	case <-time.After(1 * time.Second):
-		t.Fatal("Timedout waiting for the consumer")
-	}
+	requeuedMessage := getMessage(t, consumer.Messages)
 
 	if requeuedMessage == nil {
 		t.Fatal("Did not get the requeued message")
@@ -191,9 +161,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	consumer := NewConsumer(consumerConfig)
 
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
@@ -202,21 +170,17 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	dlqConsumer := NewConsumer(dlqConfig)
 
-	if ok := <-dlqConsumer.QueuesBound; !ok {
-		t.Fatal("Didnt bind DLQ")
-	}
+	assertReady(t, dlqConsumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
+	assertReady(t, publisher.PublishReady)
 
 	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	publishedMessage := <-consumer.Messages
+	publishedMessage := getMessage(t, consumer.Messages)
 
 	if publishedMessage == nil {
 		t.Fatal("Did not get the published message")
@@ -226,7 +190,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message")
 	}
 
-	firstRequeuedMessage := <-consumer.Messages
+	firstRequeuedMessage := getMessage(t, consumer.Messages)
 
 	if firstRequeuedMessage == nil {
 		t.Fatal("Did not get the requeued message")
@@ -249,7 +213,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 		t.Fatal("Could not REQUEUE the message for the second time")
 	}
 
-	dlqMessage := <-dlqConsumer.Messages
+	dlqMessage := getMessage(t, dlqConsumer.Messages)
 
 	if string(dlqMessage.Body()) != string(payload) {
 		t.Fatal("failed to get dlq'd message")
@@ -271,15 +235,11 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	consumer := NewConsumer(consumerConfig)
 
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
 
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
+	assertReady(t, publisher.PublishReady)
 
 	if err := publisher.Publish(payload, ""); err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -287,7 +247,7 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	counter := 1
 	for ; counter < 10; counter++ {
-		msg := <-consumer.Messages
+		msg := getMessage(t, consumer.Messages)
 		actualMessage := string(msg.Body())
 		expectedMessage := string(payload)
 
@@ -310,15 +270,10 @@ func TestPatterns(t *testing.T) {
 	})
 
 	consumer := NewConsumer(consumerConfig)
-
-	if ok := <-consumer.QueuesBound; !ok {
-		t.Fatal("Didn't bind original queues")
-	}
+	assertReady(t, consumer.QueuesBound)
 
 	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
+	assertReady(t, publisher.PublishReady)
 
 	gotMessageForPattern := func(msg, pattern string) bool {
 
@@ -405,4 +360,26 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.Retries,
 		serviceName,
 	)
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+var noPatterns = []string{}
+
+func assertReady(t *testing.T, ch <-chan bool) {
+	select {
+	case <-ch:
+		t.Log("carry on...")
+	case <-time.After(5 * time.Second):
+		t.Fatal("Didnt get ready in time")
+	}
+}
+
+func getMessage(t *testing.T, ch <-chan Message) (message Message) {
+	select {
+	case msg := <-ch:
+		message = msg
+	case <-time.After(1 * time.Second):
+		t.Fatal("Timedout waiting for message")
+	}
+	return
 }
