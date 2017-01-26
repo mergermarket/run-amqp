@@ -51,9 +51,13 @@ func (p *Publisher) IsReady() bool {
 
 // NewPublisher returns a function to send messages to the exchange defined in your config
 func NewPublisher(config PublisherConfig) *Publisher {
-	publishReady := make(chan bool)
+	p := new(Publisher)
+	p.config = config
+	p.PublishReady = make(chan bool)
+	p.router = newPublisherServer(p, config.exchange.Name, config.Logger)
+
 	rabbitState := makeNewConnectedRabbit(config.connection, config.exchange)
-	p := newPublisher(rabbitState.newlyOpenedChannels, config, publishReady)
+	go p.listenForOpenedAMQPChannel(rabbitState.newlyOpenedChannels)
 	return p
 }
 
@@ -61,21 +65,11 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.router.ServeHTTP(w, r)
 }
 
-func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publishReady chan bool) *Publisher {
-	p := new(Publisher)
-	p.config = config
-	p.PublishReady = publishReady
-
-	p.router = newPublisherServer(p, config.exchange.Name, config.Logger)
-
-	go func() {
-		for ch := range channels {
-			p.currentAmqpChannel = ch
-			p.publisherReady = true
-			publishReady <- true
-		}
-	}()
-
-	config.Logger.Info("Ready to publish")
-	return p
+func (p *Publisher) listenForOpenedAMQPChannel(channels <-chan *amqp.Channel) {
+	for ch := range channels {
+		p.currentAmqpChannel = ch
+		p.publisherReady = true
+		p.PublishReady <- true
+		p.config.Logger.Info("Ready to publish")
+	}
 }
