@@ -42,6 +42,7 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 	return nil
 }
 
+// IsReady return true when the publisher is ready to Publish
 func (p *Publisher) IsReady() bool {
 	return p.publisherReady;
 }

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 )
 
+const entryBody = "https://github.com/mergermarket/run-amqp/issues/10"
 
 type publisher interface {
 	IsReady() bool
@@ -40,7 +41,8 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		fmt.Fprint(w, "https://github.com/mergermarket/run-amqp/issues/10")
+
+		fmt.Fprint(w, entryBody)
 		return
 	}
 
@@ -72,7 +74,7 @@ func (p *publisherServer) rabbitup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintf(w, "Rabbit is up!")
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusServiceUnavailable)
 		fmt.Fprintf(w, "Rabbit did not start up!")
 	}
 }
