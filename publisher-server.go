@@ -119,12 +119,12 @@ const entryBody = `<html>
 <form method="post" action="/entry">
 <fieldset>
 <legend><span class="number">1</span> Pattern</legend>
-<input type="text" name="field1" placeholder="Routing key pattern">
+<input type="text" name="pattern" placeholder="Routing key pattern">
 </select>
 </fieldset>
 <fieldset>
 <legend><span class="number">2</span> Message</legend>
-<textarea rows="10" name="field3" placeholder="Your message to publish to EXCHANE_NAME exchange"></textarea>
+<textarea rows="10" name="message" placeholder="Your message to publish to EXCHANE_NAME exchange"></textarea>
 </fieldset>
 <input type="submit" value="Send" />
 </form>
