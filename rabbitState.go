@@ -64,12 +64,16 @@ func (r *rabbitState) notifyNewChannelOpened() {
 
 func (r *rabbitState) listenForChannelErrors() {
 	r.config.Logger.Debug("listening for channel errors")
-	for rabbitErr := range r.channelErrors {
-		if rabbitErr != nil {
-			r.config.Logger.Error("There was an error with channel", rabbitErr)
-			r.cleanupOldResources()
-			r.connect()
+	for amqpError := range r.channelErrors {
+
+		if amqpError.Code == amqp.PreconditionFailed {
+			r.config.Logger.Error(fmt.Sprintf(`Precondition error, check the configs for exchange "%s" on url: "%s" reason: "%s"`, r.exchangeConfig, r.config.URL, amqpError.Reason))
+			return
 		}
+
+		r.config.Logger.Error("There was an error with channel", amqpError)
+		r.cleanupOldResources()
+		r.connect()
 	}
 	r.config.Logger.Debug("Rabbit errors channel closed")
 }
@@ -102,6 +106,7 @@ func (r *rabbitState) cleanupOldResources() {
 
 func (r *rabbitState) sendError(err error) {
 	defer func() {
+		//todo: we need to somehow not send if the channel is closed
 		if re := recover(); re != nil {
 			r.config.Logger.Error(fmt.Sprintf("Recovered from %v, with original error: [%v]", re, err))
 		}
