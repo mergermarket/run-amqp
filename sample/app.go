@@ -52,9 +52,7 @@ func main() {
 		log.Fatal("Timed out waiting to set up rabbit")
 	}
 
-	publisher.Publish([]byte("1"), "")
-	publisher.Publish([]byte("2"), "")
-	publisher.Publish([]byte("3"), "")
+	publisher.Publish([]byte("This is the publisher being used to... publish"), "")
 
 	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange or GET /up to see if rabbit is ready")
 

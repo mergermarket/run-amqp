@@ -34,10 +34,12 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 	}
 
 	if pattern != "" {
-		p.config.Logger.Info("Published", string(msg), "with pattern", pattern)
+		message := fmt.Sprintf(`Published "%s" with pattern "%s"`, string(msg), pattern)
+		p.config.Logger.Info(message)
 
 	} else {
-		p.config.Logger.Info("Published", string(msg))
+		message := fmt.Sprintf(`Published "%s"`, string(msg))
+		p.config.Logger.Info(message)
 	}
 	return nil
 }
@@ -64,7 +66,7 @@ func newPublisher(channels <-chan *amqp.Channel, config PublisherConfig, publish
 	p.config = config
 	p.PublishReady = publishReady
 
-	p.router = newPublisherServer(p, config.exchange.Name)
+	p.router = newPublisherServer(p, config.exchange.Name, config.Logger)
 
 	go func() {
 		for ch := range channels {
