@@ -12,12 +12,17 @@ type publisher interface {
 	Publish(message []byte, pattern string) error
 }
 
+type viewModel struct {
+	ExchangeName string
+}
+
 type publisherServer struct {
 	router       *http.ServeMux
 	publisher    publisher
 	exchangeName string
 	form         *template.Template
 	logger       logger
+	viewModel    viewModel
 }
 
 func newPublisherServer(publisher publisher, exchangeName string, logger logger) *publisherServer {
@@ -38,6 +43,9 @@ func newPublisherServer(publisher publisher, exchangeName string, logger logger)
 	}
 
 	p.form = t
+	p.viewModel = viewModel{
+		ExchangeName: exchangeName,
+	}
 
 	return p
 }
@@ -55,7 +63,8 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		if err := p.form.Execute(w, nil); err != nil {
+
+		if err := p.form.Execute(w, p.viewModel); err != nil {
 			http.Error(w, fmt.Sprintf("Problem rendering templae %v", err), http.StatusInternalServerError)
 		}
 		return
