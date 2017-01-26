@@ -55,7 +55,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 
 	err = message.Ack()
 
-	if err != nil {
+	if err == nil {
 		t.Fatal("Error when Acking the message")
 	}
 }
