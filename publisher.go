@@ -65,7 +65,7 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Publisher) listenForOpenedAMQPChannel() {
-	state := makeNewConnectedRabbit(p.config.connection, p.config.exchange)
+	state := makeNewConnectedRabbit(p.config.connectionConfig, p.config.exchange)
 	for ch := range state.newlyOpenedChannels {
 		p.currentAmqpChannel = ch
 		p.publishReady = true

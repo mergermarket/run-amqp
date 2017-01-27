@@ -12,11 +12,11 @@ type rabbitState struct {
 	currentAmqpChannel    *amqp.Channel
 	newlyOpenedChannels   chan *amqp.Channel
 	channelErrors         chan *amqp.Error
-	config                connection
+	config                connectionConfig
 	exchangeConfig        exchange
 }
 
-func makeNewConnectedRabbit(config connection, exchange exchange) *rabbitState {
+func makeNewConnectedRabbit(config connectionConfig, exchange exchange) *rabbitState {
 
 	r := new(rabbitState)
 	r.newlyOpenedChannels = make(chan *amqp.Channel, 1)
@@ -92,13 +92,13 @@ func (r *rabbitState) cleanupOldResources() {
 	}
 
 	if r.currentAmqpConnection != nil {
-		r.config.Logger.Debug("Closing connection", r.currentAmqpConnection)
+		r.config.Logger.Debug("Closing connectionConfig", r.currentAmqpConnection)
 		if err := r.currentAmqpConnection.Close(); err != nil {
 			r.config.Logger.Error(err)
 		} else {
 			r.currentAmqpConnection.ConnectionState()
 			r.currentAmqpConnection = nil
-			r.config.Logger.Debug("Closed connection")
+			r.config.Logger.Debug("Closed connectionConfig")
 		}
 	}
 	r.config.Logger.Debug("Resources cleaned")

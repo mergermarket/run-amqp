@@ -8,7 +8,7 @@ import (
 
 func TestRabbitState_reconnect(t *testing.T) {
 	config := NewPublisherConfig(testRabbitURI, "test-exchange-"+randomString(5), Fanout, &testLogger{t})
-	state := makeNewConnectedRabbit(config.connection, config.exchange)
+	state := makeNewConnectedRabbit(config.connectionConfig, config.exchange)
 
 	select {
 	case <-state.newlyOpenedChannels:

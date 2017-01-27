@@ -30,7 +30,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 	qBound := make(chan bool)
 
 	go func() {
-		rabbitState := makeNewConnectedRabbit(config.connection, config.exchange)
+		rabbitState := makeNewConnectedRabbit(config.connectionConfig, config.exchange)
 
 		for ch := range rabbitState.newlyOpenedChannels {
 			err := addMainQueueAlsoDleExchangeAndQueue(ch, config)
