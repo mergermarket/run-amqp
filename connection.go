@@ -10,6 +10,7 @@ import (
 type connection struct {
 	connectionConfig    *connectionConfig
 	connections         chan *amqp.Connection
+	openConnection      *amqp.Connection
 	isConnectionBlocked chan bool
 	connectionErrors    chan *amqp.Error
 	connectionBlocking  chan amqp.Blocking
@@ -39,8 +40,9 @@ func (c *connection) connect() {
 		if err == nil {
 			c.connectionConfig.Logger.Info("Connected to", c.connectionConfig.URL)
 
-			c.listenForConnectionError(openConnection)
-			c.listenForConnectionBlocked(openConnection)
+			c.listenForConnectionError()
+			c.listenForConnectionBlocked()
+			c.openConnection = openConnection
 			c.connections <- openConnection
 
 		}
@@ -53,26 +55,27 @@ func (c *connection) connect() {
 	}
 }
 
-func (c *connection) listenForConnectionError(openConnection *amqp.Connection) {
+func (c *connection) listenForConnectionError() {
 	close(c.connectionErrors)
 	c.connectionErrors = make(chan *amqp.Error)
-	openConnection.NotifyClose(c.connectionErrors)
+	c.openConnection.NotifyClose(c.connectionErrors)
 
 	go func() {
 		for {
 			if err, ok := <-c.connectionErrors; err != nil && ok {
 				c.connectionConfig.Logger.Error(fmt.Sprintf("there was connection error with Code: %d Reason: $s", err.Code, err.Reason))
+				c.closeIfOpenConnection()
 				c.connect()
 			}
 		}
 	}()
 }
 
-func (c *connection) listenForConnectionBlocked(openConnection *amqp.Connection) {
+func (c *connection) listenForConnectionBlocked() {
 
 	close(c.connectionBlocking)
 	c.connectionBlocking = make(chan amqp.Blocking)
-	openConnection.NotifyBlocked(c.connectionBlocking)
+	c.openConnection.NotifyBlocked(c.connectionBlocking)
 
 	go func() {
 		for {
@@ -83,4 +86,12 @@ func (c *connection) listenForConnectionBlocked(openConnection *amqp.Connection)
 			}
 		}
 	}()
+}
+
+func (c *connection) closeIfOpenConnection()  {
+	err:= c.openConnection.Close()
+
+	if err != nil {
+		c.connectionConfig.Logger.Error("failed to close the connection", err)
+	}
 }
