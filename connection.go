@@ -64,7 +64,7 @@ func (c *connection) listenForConnectionError() {
 		for {
 			if err, ok := <-c.connectionErrors; err != nil && ok {
 				c.connectionConfig.Logger.Error(fmt.Sprintf("there was connection error with Code: %d Reason: $s", err.Code, err.Reason))
-				c.closeIfOpenConnection()
+				c.closeOpenConnection()
 				c.connect()
 			}
 		}
@@ -88,7 +88,7 @@ func (c *connection) listenForConnectionBlocked() {
 	}()
 }
 
-func (c *connection) closeIfOpenConnection()  {
+func (c *connection) closeOpenConnection()  {
 	err:= c.openConnection.Close()
 
 	if err != nil {
