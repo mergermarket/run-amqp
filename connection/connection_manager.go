@@ -5,11 +5,11 @@ import (
 )
 
 type ConnectionManager interface {
-	OpenChannels() chan *amqp.Channel
+	OpenChannels(count uint8) []chan *amqp.Channel
 }
 type manager struct {
 	openConnection *amqp.Connection
-	connections chan *amqp.Connection
+	connections    chan *amqp.Connection
 	logger         logger
 }
 
@@ -19,22 +19,33 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 
 	newManager := manager{
 		connections:server.GetConnections(),
-		logger:logger,
+		logger:     logger,
 	}
 
 	return &newManager
 }
 
-func (m *manager) OpenChannel() chan *amqp.Channel {
-	c := newChannelConnection(m.logger)
+func (m *manager) OpenChannels(count uint8) []chan *amqp.Channel {
+	newChannels := make([]channelConnection, 0)
+	channels := make([]chan *amqp.Channel, 0)
+	for i := count; i > 0; i-- {
+		c := newChannelConnection(m.logger)
+		newChannels = append(newChannels, c)
+		channels = append(channels, c.NewChannels())
+	}
 
 	go func() {
 		for conn := range m.connections {
 			m.openConnection = conn
-			c.OpenChannelOn(m.openConnection)
+			for _, c := range newChannels {
+				go func(cc channelConnection) {
+					cc.OpenChannelOn(m.openConnection)
+				}(c)
+
+			}
+
 		}
 	}()
 
-	return c.NewChannels()
+	return channels
 }
-

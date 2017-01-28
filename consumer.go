@@ -39,7 +39,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 	go func() {
 		connectionManager := connection.NewConnectionManager(URL, logger)
 
-		for ch := range connectionManager.OpenChannels() {
+		for ch := range connectionManager.OpenChannels(1)[0] {
 			err := addMainQueueAlsoDleExchangeAndQueue(ch, config)
 
 			if err != nil {
