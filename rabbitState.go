@@ -67,7 +67,7 @@ func (r *rabbitState) listenForChannelErrors() {
 	for amqpError := range r.channelErrors {
 
 		if amqpError.Code == amqp.PreconditionFailed {
-			r.config.Logger.Error(fmt.Sprintf(`Precondition error, check the configs for exchange "%s" on url: "%s" reason: "%s"`, r.exchangeConfig, r.config.URL, amqpError.Reason))
+			r.config.Logger.Error(fmt.Sprintf(`Precondition error, check the configs for exchange "%s" on URL: "%s" reason: "%s"`, r.exchangeConfig, r.config.URL, amqpError.Reason))
 			return
 		}
 

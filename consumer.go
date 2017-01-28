@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"github.com/streadway/amqp"
+	"github.com/mergermarket/run-amqp/connection"
 )
 
 // Consumer has a channel for receiving messages
@@ -26,13 +27,19 @@ func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
 
 // NewConsumer returns a Consumer
 func NewConsumer(config ConsumerConfig) *Consumer {
+
+	URL := config.connectionConfig.URL
+	logger := config.connectionConfig.Logger
+
+
+
 	msgChannel := make(chan Message)
 	qBound := make(chan bool)
 
 	go func() {
-		rabbitState := makeNewConnectedRabbit(config.connectionConfig, config.exchange)
+		connectionManager := connection.NewConnectionManager(URL, logger)
 
-		for ch := range rabbitState.newlyOpenedChannels {
+		for ch := range connectionManager.OpenChannels() {
 			err := addMainQueueAlsoDleExchangeAndQueue(ch, config)
 
 			if err != nil {
@@ -155,7 +162,7 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	return nil
 }
 
-func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- Message) error {
+func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan <- Message) error {
 
 	msgs, err := amqpChannel.Consume(
 		config.queue.Name, // queue
