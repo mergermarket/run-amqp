@@ -1,17 +1,11 @@
 package connection
 
 import (
-	"github.com/streadway/amqp"
-	"time"
 	"fmt"
+	"github.com/streadway/amqp"
 	"math"
+	"time"
 )
-
-type logger interface {
-	Info(...interface{})
-	Error(...interface{})
-	Debug(...interface{})
-}
 
 type serverConnection interface {
 	GetConnections() chan *amqp.Connection
@@ -77,7 +71,10 @@ func (c *sConnection) connect() {
 }
 
 func (c *sConnection) listenForConnectionError() {
-	close(c.connectionErrors)
+	if c.connectionErrors != nil {
+		close(c.connectionErrors)
+	}
+
 	c.connectionErrors = make(chan *amqp.Error)
 	c.openConnection.NotifyClose(c.connectionErrors)
 

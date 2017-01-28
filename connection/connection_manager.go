@@ -4,9 +4,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
+type logger interface {
+	Info(...interface{})
+	Error(...interface{})
+	Debug(...interface{})
+}
+
 type ConnectionManager interface {
 	OpenChannels(count uint8) []chan *amqp.Channel
 }
+
 type manager struct {
 	openConnection *amqp.Connection
 	connections    chan *amqp.Connection
@@ -18,8 +25,8 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 	server := newServerConnection(URL, logger)
 
 	newManager := manager{
-		connections:server.GetConnections(),
-		logger:     logger,
+		connections: server.GetConnections(),
+		logger:      logger,
 	}
 
 	return &newManager
@@ -28,6 +35,7 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 func (m *manager) OpenChannels(count uint8) []chan *amqp.Channel {
 	newChannels := make([]channelConnection, 0)
 	channels := make([]chan *amqp.Channel, 0)
+
 	for i := count; i > 0; i-- {
 		c := newChannelConnection(m.logger)
 		newChannels = append(newChannels, c)
@@ -39,7 +47,7 @@ func (m *manager) OpenChannels(count uint8) []chan *amqp.Channel {
 			m.openConnection = conn
 			for _, c := range newChannels {
 				go func(cc channelConnection) {
-					cc.OpenChannelOn(m.openConnection)
+					cc.OpenChannel(m.openConnection)
 				}(c)
 
 			}

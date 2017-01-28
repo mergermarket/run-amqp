@@ -1,8 +1,8 @@
 package runamqp
 
 import (
-	"github.com/streadway/amqp"
 	"github.com/mergermarket/run-amqp/connection"
+	"github.com/streadway/amqp"
 )
 
 // Consumer has a channel for receiving messages
@@ -29,15 +29,13 @@ func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
 func NewConsumer(config ConsumerConfig) *Consumer {
 
 	URL := config.connectionConfig.URL
-	logger := config.connectionConfig.Logger
-
-
+	log := config.connectionConfig.Logger
 
 	msgChannel := make(chan Message)
 	qBound := make(chan bool)
 
 	go func() {
-		connectionManager := connection.NewConnectionManager(URL, logger)
+		connectionManager := connection.NewConnectionManager(URL, log)
 
 		for ch := range connectionManager.OpenChannels(1)[0] {
 			err := addMainQueueAlsoDleExchangeAndQueue(ch, config)
@@ -162,7 +160,7 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	return nil
 }
 
-func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan <- Message) error {
+func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- Message) error {
 
 	msgs, err := amqpChannel.Consume(
 		config.queue.Name, // queue

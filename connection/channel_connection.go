@@ -1,13 +1,13 @@
 package connection
 
 import (
-	"github.com/streadway/amqp"
 	"fmt"
+	"github.com/streadway/amqp"
 	"time"
 )
 
 type channelConnection interface {
-	OpenChannelOn(connection *amqp.Connection)
+	OpenChannel(connection *amqp.Connection)
 	NewChannels() chan *amqp.Channel
 }
 
@@ -21,14 +21,14 @@ type cConnection struct {
 
 func newChannelConnection(logger logger) channelConnection {
 	channel := cConnection{
-		logger:    logger,
-		channels:  make(chan *amqp.Channel),
+		logger:   logger,
+		channels: make(chan *amqp.Channel),
 	}
 
 	return &channel
 }
 
-func (c *cConnection) OpenChannelOn(connection *amqp.Connection) {
+func (c *cConnection) OpenChannel(connection *amqp.Connection) {
 	c.connection = connection
 	c.create()
 }
@@ -54,7 +54,9 @@ func (c *cConnection) create() {
 }
 
 func (c *cConnection) listenForChannelError() {
-	close(c.channelErrors)
+	if c.channelErrors != nil {
+		close(c.channelErrors)
+	}
 	c.channelErrors = make(chan *amqp.Error)
 	c.openChannel.NotifyClose(c.channelErrors)
 
