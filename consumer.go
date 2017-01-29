@@ -45,6 +45,13 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 				return
 			}
 
+			err = makeExchange(ch, config.exchange.Name, config.exchange.Type)
+
+			if err != nil {
+				qBound <- false
+				return
+			}
+
 			if config.queue.RetryLimit > 0 {
 				err = addRetryExchangesAndQueue(ch, config)
 

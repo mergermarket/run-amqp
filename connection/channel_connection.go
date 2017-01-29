@@ -3,7 +3,6 @@ package connection
 import (
 	"fmt"
 	"github.com/streadway/amqp"
-	"time"
 )
 
 type channelConnection interface {
@@ -12,11 +11,10 @@ type channelConnection interface {
 }
 
 type cConnection struct {
-	channels      chan *amqp.Channel
-	connection    *amqp.Connection
-	openChannel   *amqp.Channel
-	channelErrors chan *amqp.Error
-	logger        logger
+	channels    chan *amqp.Channel
+	connection  *amqp.Connection
+	openChannel *amqp.Channel
+	logger      logger
 }
 
 func newChannelConnection(logger logger) channelConnection {
@@ -54,27 +52,19 @@ func (c *cConnection) create() {
 }
 
 func (c *cConnection) listenForChannelError() {
-	if c.channelErrors != nil {
-		close(c.channelErrors)
-	}
-	c.channelErrors = make(chan *amqp.Error)
-	c.openChannel.NotifyClose(c.channelErrors)
 
 	go func() {
+
+		errors := make(chan *amqp.Error)
+		c.openChannel.NotifyClose(errors)
+
 		for {
-			select {
-			case err, ok := <-c.channelErrors:
-				if err != nil && ok {
-					c.logger.Error(fmt.Sprintf("there was channel/sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
-					c.closeOpenChannel()
-					c.create()
-				}
-			default:
-				c.logger.Debug("will resume listening for channel errors in 3 seconds")
-				time.Sleep(3 * time.Second)
-
+			err, ok := <-errors
+			if err != nil && ok {
+				c.logger.Error(fmt.Sprintf("there was channel/sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
+				c.closeOpenChannel()
+				c.create()
 			}
-
 		}
 	}()
 }
