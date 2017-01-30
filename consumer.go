@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"fmt"
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
 )
@@ -32,82 +33,80 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 	log := config.connectionConfig.Logger
 
 	msgChannel := make(chan Message)
-	qBound := make(chan bool)
+	queuesBound := make(chan bool)
 
 	go func() {
 		connectionManager := connection.NewConnectionManager(URL, log)
 
-		for ch := range connectionManager.OpenChannels(1)[0] {
-			err := addMainQueueAlsoDleExchangeAndQueue(ch, config)
+		for newAMQPChannel := range connectionManager.OpenChannels() {
+
+			log.Debug(fmt.Sprintf(`making an exchange: "%s" of type: "%s" with queue: "%s" bounds to it.`, config.exchange.Name, config.exchange.Type, config.queue.Name))
+
+			err := setUpMainExchangeWithQueue(newAMQPChannel, config)
 
 			if err != nil {
-				qBound <- false
+				queuesBound <- false
 				return
 			}
 
-			err = makeExchange(ch, config.exchange.Name, config.exchange.Type)
+			err = setUpDealLetterExchangeWithQueue(newAMQPChannel, config)
 
 			if err != nil {
-				qBound <- false
+
+				queuesBound <- false
 				return
 			}
 
 			if config.queue.RetryLimit > 0 {
-				err = addRetryExchangesAndQueue(ch, config)
+				err = setUpRetryExchangeWithQueue(newAMQPChannel, config)
 
 				if err != nil {
-					qBound <- false
+					queuesBound <- false
 					return
 				}
 			}
 
-			err = consumeQueue(ch, config, msgChannel)
+			err = consumeQueue(newAMQPChannel, config, msgChannel)
 			if err != nil {
-				qBound <- false
+				queuesBound <- false
 				return
 			}
-			qBound <- true
+			queuesBound <- true
 		}
 	}()
 
-	return &Consumer{msgChannel, qBound, config.Logger}
+	return &Consumer{msgChannel, queuesBound, config.Logger}
 }
 
-func addMainQueueAlsoDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
+func setUpMainExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) error {
 
-	err := addDleExchangeAndQueue(ch, config)
+	err := makeExchangePassive(ch, config.exchange.Name, config.exchange.Type)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
 	err = assertAndBindQueue(ch, config.queue.Name, config.exchange.Name, config.queue.Patterns, nil)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
-
-	config.Logger.Info("Created queue and bound", config.queue.Name, "to exchange", config.exchange.Name, "with type", config.exchange.Type, "and with routing keys", config.queue.Patterns)
 
 	return nil
 }
 
-func addDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
+func setUpDealLetterExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) error {
 
 	// make dle/dlq
 	err := makeExchange(ch, config.exchange.DLE, config.exchange.Type)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
 	err = assertAndBindQueue(ch, config.queue.DLQ, config.exchange.DLE, []string{"#"}, nil)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
@@ -116,7 +115,7 @@ func addDleExchangeAndQueue(ch *amqp.Channel, config ConsumerConfig) error {
 
 const matchAllPattern = "#"
 
-func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig) error {
+func setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel, config ConsumerConfig) error {
 
 	retryNowExchangeName := config.exchange.RetryNow
 	retryLaterExchangeName := config.exchange.RetryLater
@@ -125,7 +124,6 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	err := makeExchange(amqpChannel, retryNowExchangeName, config.exchange.Type)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
@@ -135,7 +133,6 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	err = makeExchange(amqpChannel, retryLaterExchangeName, config.exchange.Type)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
@@ -150,7 +147,6 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	err = assertAndBindQueue(amqpChannel, config.queue.RetryLater, retryLaterExchangeName, retryNowPatterns, requeueArgs)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
@@ -167,7 +163,8 @@ func addRetryExchangesAndQueue(amqpChannel *amqp.Channel, config ConsumerConfig)
 	return nil
 }
 
-func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan<- Message) error {
+
+func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan <- Message) error {
 
 	msgs, err := amqpChannel.Consume(
 		config.queue.Name, // queue

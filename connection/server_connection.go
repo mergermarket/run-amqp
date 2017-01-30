@@ -50,21 +50,26 @@ func (c *sConnection) connect() {
 			Heartbeat: 30 * time.Second,
 		})
 
-		if err == nil {
-			c.logger.Info("Connected to", c.URL)
-
-			c.listenForConnectionError()
-			c.listenForConnectionBlocked()
-			c.openConnection = openConnection
-			c.connections <- openConnection
-
+		if err != nil {
+			c.logger.Error(fmt.Errorf("problem connecting to %s, %v", c.URL, err))
+			millis := math.Exp2(float64(attempts))
+			sleepDuration := time.Duration(int(millis)) * time.Second
+			c.logger.Info("Trying to reconnect to RabbitMQ at", c.URL, "after", sleepDuration)
+			time.Sleep(sleepDuration)
+			continue
 		}
 
-		c.logger.Error(fmt.Errorf("problem connecting to %s, %v", c.URL, err))
-		millis := math.Exp2(float64(attempts))
-		sleepDuration := time.Duration(int(millis)) * time.Second
-		c.logger.Info("Trying to reconnect to RabbitMQ at", c.URL, "after", sleepDuration)
-		time.Sleep(sleepDuration)
+		c.logger.Info("Connected to", c.URL)
+
+		c.listenForConnectionError()
+		c.listenForConnectionBlocked()
+		c.openConnection = openConnection
+		go func() {
+			c.connections <- openConnection
+		}()
+
+		return
+
 	}
 }
 
@@ -76,17 +81,11 @@ func (c *sConnection) listenForConnectionError() {
 		c.openConnection.NotifyClose(errors)
 
 		for {
-			select {
-			case err, ok := <-errors:
-				if err != nil && ok {
-					c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
-					c.closeOpenConnection()
-					c.connect()
-				}
-			default:
-				c.logger.Debug("will resume listening for sConnection errors in 3 seconds")
-				time.Sleep(3 * time.Second)
-
+			err, ok := <-errors
+			if err != nil && ok {
+				c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
+				c.closeOpenConnection()
+				c.connect()
 			}
 
 		}

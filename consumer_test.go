@@ -24,14 +24,13 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
 
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertReady(t, publisher.PublishReady)
+
 	consumer := NewConsumer(consumerConfig)
 
 	assertReady(t, consumer.QueuesBound)
-
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
 
 	err := publisher.Publish(payload, "")
 
@@ -50,6 +49,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error when Acking the message")
 	}
+
 }
 
 func TestDLQ(t *testing.T) {

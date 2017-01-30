@@ -11,7 +11,7 @@ type logger interface {
 }
 
 type ConnectionManager interface {
-	OpenChannels(count uint8) []chan *amqp.Channel
+	OpenChannels() chan *amqp.Channel
 }
 type manager struct {
 	openConnection *amqp.Connection
@@ -31,29 +31,17 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 	return &newManager
 }
 
-func (m *manager) OpenChannels(count uint8) []chan *amqp.Channel {
-	newChannels := make([]channelConnection, 0)
+func (m *manager) OpenChannels() chan *amqp.Channel {
 
-	channels := make([]chan *amqp.Channel, 0)
-
-	for i := count; i > 0; i-- {
-		c := newChannelConnection(m.logger)
-		newChannels = append(newChannels, c)
-		channels = append(channels, c.NewChannels())
-	}
+	channelConnection := newChannelConnection(m.logger)
 
 	go func() {
 		for conn := range m.connections {
 			m.openConnection = conn
-			for _, c := range newChannels {
-				go func(cc channelConnection) {
-					cc.OpenChannel(m.openConnection)
-				}(c)
-
-			}
+			channelConnection.OpenChannel(conn)
 
 		}
 	}()
 
-	return channels
+	return channelConnection.NewChannels()
 }

@@ -61,7 +61,7 @@ func (c *cConnection) listenForChannelError() {
 		for {
 			err, ok := <-errors
 			if err != nil && ok {
-				c.logger.Error(fmt.Sprintf("there was channel/sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
+				c.logger.Error(fmt.Sprintf("there was channel/sConnection error with Code: %d Reason: %s", err.Code, err.Reason))
 				c.closeOpenChannel()
 				c.create()
 			}
