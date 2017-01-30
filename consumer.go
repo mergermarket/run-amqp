@@ -45,6 +45,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 			err := setUpMainExchangeWithQueue(newAMQPChannel, config)
 
 			if err != nil {
+				config.Logger.Error(err)
 				queuesBound <- false
 				return
 			}
@@ -52,7 +53,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 			err = setUpDealLetterExchangeWithQueue(newAMQPChannel, config)
 
 			if err != nil {
-
+				config.Logger.Error(err)
 				queuesBound <- false
 				return
 			}
@@ -61,6 +62,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 				err = setUpRetryExchangeWithQueue(newAMQPChannel, config)
 
 				if err != nil {
+					config.Logger.Error(err)
 					queuesBound <- false
 					return
 				}
@@ -68,6 +70,7 @@ func NewConsumer(config ConsumerConfig) *Consumer {
 
 			err = consumeQueue(newAMQPChannel, config, msgChannel)
 			if err != nil {
+				config.Logger.Error(err)
 				queuesBound <- false
 				return
 			}
@@ -177,7 +180,6 @@ func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChann
 	)
 
 	if err != nil {
-		config.Logger.Error(err)
 		return err
 	}
 
