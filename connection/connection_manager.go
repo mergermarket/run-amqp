@@ -25,9 +25,9 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 	server := newServerConnection(URL, logger)
 
 	newManager := manager{
-		connections:       server.GetConnections(),
-		logger:            logger,
-		channelConnections:make([]channelConnection, 0),
+		connections:        server.GetConnections(),
+		logger:             logger,
+		channelConnections: make([]channelConnection, 0),
 	}
 
 	go func() {

@@ -31,6 +31,7 @@ type MessageHandler interface {
 
 // Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer's Messages channel.
 func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
+	c.config.Logger.Debug("Stuff", handler.Name(), c.Messages)
 	startWorkers(c.Messages, handler, numberOfWorkers, c.config.Logger)
 }
 
@@ -38,10 +39,10 @@ func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
 func NewConsumer(config ConsumerConfig) *Consumer {
 
 	consumer := Consumer{
-		Messages:        make(chan Message),
-		QueuesBound:     make(chan bool),
-		config:          config,
-		consumerChannels:new(consumerChannels),
+		Messages:         make(chan Message),
+		QueuesBound:      make(chan bool),
+		config:           config,
+		consumerChannels: new(consumerChannels),
 	}
 
 	go consumer.setUpConnection()
@@ -78,7 +79,7 @@ func (c *Consumer) setUpConnection() {
 	c.QueuesBound <- true
 }
 
-func allQueuesReady(signals ...<-chan bool)  bool {
+func allQueuesReady(signals ...<-chan bool) bool {
 	var wg sync.WaitGroup
 	isAnyUnSuccessful := false
 	wg.Add(len(signals))
@@ -118,7 +119,7 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
 	c.config.Logger.Debug(fmt.Sprintf(`passively checking the exchange: "%s" of type: "%s" and binding the queue: "%s" to it.`, c.config.exchange.Name, c.config.exchange.Type, c.config.queue.Name))
 
-	err := makeExchangePassive(amqpChannel, c.config.exchange.Name, c.config.exchange.Type)
+	err := makeExchange(amqpChannel, c.config.exchange.Name, c.config.exchange.Type)
 
 	if err != nil {
 		return err
@@ -126,11 +127,7 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
 	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, nil)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (c *Consumer) setUpDeadLetterExchangeWithQueue(amqpChannel *amqp.Channel) error {
@@ -148,11 +145,7 @@ func (c *Consumer) setUpDeadLetterExchangeWithQueue(amqpChannel *amqp.Channel) e
 
 	err = assertAndBindQueue(amqpChannel, c.config.queue.DLQ, c.config.exchange.DLE, []string{"#"}, nil)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 const matchAllPattern = "#"
@@ -230,11 +223,12 @@ func (c *Consumer) consumeQueue() error {
 	go func() {
 		for d := range msgs {
 			c.Messages <- &amqpMessage{
-				delivery:               d,
-				amqpChannel:            c.consumerChannels.dleChannel,
-				retryLimit:             c.config.queue.RetryLimit,
-				retryLaterExchangeName: c.config.exchange.RetryLater,
-				dleExchangeName:        c.config.exchange.DLE,
+				delivery:          d,
+				dleChannel:        c.consumerChannels.dleChannel,
+				retryChannel:      c.consumerChannels.retryChannel,
+				retryLimit:        c.config.queue.RetryLimit,
+				retryExchangeName: c.config.exchange.RetryLater,
+				dleExchangeName:   c.config.exchange.DLE,
 			}
 		}
 	}()
