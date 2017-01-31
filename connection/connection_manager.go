@@ -14,9 +14,10 @@ type ConnectionManager interface {
 	OpenChannels() chan *amqp.Channel
 }
 type manager struct {
-	openConnection *amqp.Connection
-	connections    chan *amqp.Connection
-	logger         logger
+	openConnection     *amqp.Connection
+	connections        chan *amqp.Connection
+	logger             logger
+	channelConnections []channelConnection
 }
 
 func NewConnectionManager(URL string, logger logger) ConnectionManager {
@@ -24,9 +25,24 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 	server := newServerConnection(URL, logger)
 
 	newManager := manager{
-		connections: server.GetConnections(),
-		logger:      logger,
+		connections:       server.GetConnections(),
+		logger:            logger,
+		channelConnections:make([]channelConnection, 0),
 	}
+
+	go func() {
+		for {
+			select {
+			case conn := <-newManager.connections:
+				newManager.openConnection = conn
+				for _, channelConnection := range newManager.channelConnections {
+					channelConnection.OpenChannel(conn)
+				}
+
+			}
+
+		}
+	}()
 
 	return &newManager
 }
@@ -34,12 +50,11 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 func (m *manager) OpenChannels() chan *amqp.Channel {
 
 	channelConnection := newChannelConnection(m.logger)
+	m.channelConnections = append(m.channelConnections, channelConnection)
 
 	go func() {
-		for conn := range m.connections {
-			m.openConnection = conn
-			channelConnection.OpenChannel(conn)
-
+		if m.openConnection != nil {
+			channelConnection.OpenChannel(m.openConnection)
 		}
 	}()
 

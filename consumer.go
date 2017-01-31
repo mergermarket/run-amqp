@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
+	"sync"
 )
+
+type consumerChannels struct {
+	mainChannel  *amqp.Channel
+	dleChannel   *amqp.Channel
+	retryChannel *amqp.Channel
+}
 
 // Consumer has a channel for receiving messages
 type Consumer struct {
-	Messages    <-chan Message
-	QueuesBound <-chan bool
-	logger      logger
+	Messages         chan Message
+	QueuesBound      chan bool
+	config           ConsumerConfig
+	consumerChannels *consumerChannels
 }
 
 // MessageHandler is something that can process a Message, calling Ack, nackCalls when appropiate for your domain
@@ -23,73 +31,100 @@ type MessageHandler interface {
 
 // Process creates a worker pool of size numberOfWorkers which will run handler on every message sent to the consumer's Messages channel.
 func (c *Consumer) Process(handler MessageHandler, numberOfWorkers int) {
-	startWorkers(c.Messages, handler, numberOfWorkers, c.logger)
+	startWorkers(c.Messages, handler, numberOfWorkers, c.config.Logger)
 }
 
 // NewConsumer returns a Consumer
 func NewConsumer(config ConsumerConfig) *Consumer {
 
-	URL := config.connectionConfig.URL
-	log := config.connectionConfig.Logger
+	consumer := Consumer{
+		Messages:        make(chan Message),
+		QueuesBound:     make(chan bool),
+		config:          config,
+		consumerChannels:new(consumerChannels),
+	}
 
-	msgChannel := make(chan Message)
-	queuesBound := make(chan bool)
+	go consumer.setUpConnection()
+
+	return &consumer
+}
+
+func (c *Consumer) setUpConnection() {
+
+	connectionManager := connection.NewConnectionManager(c.config.URL, c.config.Logger)
+
+	mainQueueReady := make(chan bool)
+	dleQueueReady := make(chan bool)
+	retryQueueReady := make(chan bool)
+
+	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.setUpMainExchangeWithQueue)
+	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.setUpDeadLetterExchangeWithQueue)
+	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.setUpRetryExchangeWithQueue)
+
+	isReady := allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
+
+	if !isReady {
+		c.QueuesBound <- false
+		return
+	}
+
+	err := c.consumeQueue()
+
+	if err != nil {
+		c.QueuesBound <- false
+		return
+	}
+
+	c.QueuesBound <- true
+}
+
+func allQueuesReady(signals ...<-chan bool) (allSuccessful bool) {
+	var wg sync.WaitGroup
+	isAnyUnSuccessful := false
+	wg.Add(len(signals))
+
+	for _, s := range signals {
+		go func(signal <-chan bool) {
+			defer wg.Done()
+			if success := <-signal; !success {
+				isAnyUnSuccessful = true
+			}
+		}(s)
+	}
+
+	wg.Wait()
+
+	return !isAnyUnSuccessful
+
+}
+
+func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error) {
 
 	go func() {
-		connectionManager := connection.NewConnectionManager(URL, log)
-
-		for newAMQPChannel := range connectionManager.OpenChannels() {
-
-			log.Debug(fmt.Sprintf(`making an exchange: "%s" of type: "%s" with queue: "%s" bounds to it.`, config.exchange.Name, config.exchange.Type, config.queue.Name))
-
-			err := setUpMainExchangeWithQueue(newAMQPChannel, config)
-
+		for channel := range connectionManager.OpenChannels() {
+			err := setUpExchangeWithQueue(channel)
 			if err != nil {
-				config.Logger.Error(err)
-				queuesBound <- false
-				return
+				c.config.Logger.Error(err)
 			}
-
-			err = setUpDealLetterExchangeWithQueue(newAMQPChannel, config)
-
-			if err != nil {
-				config.Logger.Error(err)
-				queuesBound <- false
-				return
-			}
-
-			if config.queue.RetryLimit > 0 {
-				err = setUpRetryExchangeWithQueue(newAMQPChannel, config)
-
-				if err != nil {
-					config.Logger.Error(err)
-					queuesBound <- false
-					return
-				}
-			}
-
-			err = consumeQueue(newAMQPChannel, config, msgChannel)
-			if err != nil {
-				config.Logger.Error(err)
-				queuesBound <- false
-				return
-			}
-			queuesBound <- true
+			isReady <- err == nil
 		}
 	}()
 
-	return &Consumer{msgChannel, queuesBound, config.Logger}
 }
 
-func setUpMainExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) error {
+func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
-	err := makeExchangePassive(ch, config.exchange.Name, config.exchange.Type)
+	c.consumerChannels.mainChannel = amqpChannel
+
+	c.config.Logger.Debug(fmt.Sprintf(`passively checking the exchange: "%s" of type: "%s" and binding the queue: "%s" to it.`, c.config.exchange.Name, c.config.exchange.Type, c.config.queue.Name))
+
+	err := makeExchangePassive(amqpChannel, c.config.exchange.Name, c.config.exchange.Type)
 
 	if err != nil {
 		return err
 	}
 
-	err = assertAndBindQueue(ch, config.queue.Name, config.exchange.Name, config.queue.Patterns, nil)
+	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, nil)
 
 	if err != nil {
 		return err
@@ -98,16 +133,20 @@ func setUpMainExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) error {
 	return nil
 }
 
-func setUpDealLetterExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) error {
+func (c *Consumer) setUpDeadLetterExchangeWithQueue(amqpChannel *amqp.Channel) error {
+
+	c.consumerChannels.dleChannel = amqpChannel
+
+	c.config.Logger.Debug(fmt.Sprintf(`making DLE exchange: "%s" of type: "%s" with queue: "%s" bounds to it.`, c.config.exchange.DLE, c.config.exchange.Type, c.config.queue.DLQ))
 
 	// make dle/dlq
-	err := makeExchange(ch, config.exchange.DLE, config.exchange.Type)
+	err := makeExchange(amqpChannel, c.config.exchange.DLE, c.config.exchange.Type)
 
 	if err != nil {
 		return err
 	}
 
-	err = assertAndBindQueue(ch, config.queue.DLQ, config.exchange.DLE, []string{"#"}, nil)
+	err = assertAndBindQueue(amqpChannel, c.config.queue.DLQ, c.config.exchange.DLE, []string{"#"}, nil)
 
 	if err != nil {
 		return err
@@ -118,81 +157,84 @@ func setUpDealLetterExchangeWithQueue(ch *amqp.Channel, config ConsumerConfig) e
 
 const matchAllPattern = "#"
 
-func setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel, config ConsumerConfig) error {
+func (c *Consumer) setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
-	retryNowExchangeName := config.exchange.RetryNow
-	retryLaterExchangeName := config.exchange.RetryLater
+	c.consumerChannels.retryChannel = amqpChannel
+
+	retryNowExchangeName := c.config.exchange.RetryNow
+	retryLaterExchangeName := c.config.exchange.RetryLater
+
+	c.config.Logger.Debug(fmt.Sprintf(`making RETRY-LATER exchange: "%s" of type: "%s" bound to RETRY-NOW exchage: "%s" with queue: "%s" bounds to it.`, retryLaterExchangeName, c.config.exchange.Type, retryLaterExchangeName, c.config.queue.Name))
 
 	// make dle/dlq
-	err := makeExchange(amqpChannel, retryNowExchangeName, config.exchange.Type)
+	err := makeExchange(amqpChannel, retryNowExchangeName, c.config.exchange.Type)
 
 	if err != nil {
 		return err
 	}
 
-	config.Logger.Info("Created retryNow exchange", retryNowExchangeName, "type of exchange:", config.exchange.Type)
+	c.config.Logger.Info("Created retryNow exchange", retryNowExchangeName, "type of exchange:", c.config.exchange.Type)
 
 	// make dle/dlq
-	err = makeExchange(amqpChannel, retryLaterExchangeName, config.exchange.Type)
+	err = makeExchange(amqpChannel, retryLaterExchangeName, c.config.exchange.Type)
 
 	if err != nil {
 		return err
 	}
 
-	config.Logger.Info("Created retryLater exchange", retryLaterExchangeName, "type of exchange:", config.exchange.Type)
+	c.config.Logger.Info("Created retryLater exchange", retryLaterExchangeName, "type of exchange:", c.config.exchange.Type)
 
 	requeueArgs := make(map[string]interface{})
 	requeueArgs["x-dead-letter-exchange"] = retryNowExchangeName
-	requeueArgs["x-message-ttl"] = config.queue.RequeueTTL
+	requeueArgs["x-message-ttl"] = c.config.queue.RequeueTTL
 	requeueArgs["x-dead-letter-routing-key"] = matchAllPattern
 	retryNowPatterns := []string{matchAllPattern}
 
-	err = assertAndBindQueue(amqpChannel, config.queue.RetryLater, retryLaterExchangeName, retryNowPatterns, requeueArgs)
+	err = assertAndBindQueue(amqpChannel, c.config.queue.RetryLater, retryLaterExchangeName, retryNowPatterns, requeueArgs)
 
 	if err != nil {
 		return err
 	}
 
-	config.Logger.Info("Created retry later queue and bound", config.queue.RetryLater, "to exchange", retryNowExchangeName, "with type", config.exchange.Type, "and with routing keys", retryNowPatterns)
+	c.config.Logger.Info("Created retry later queue and bound", c.config.queue.RetryLater, "to exchange", retryNowExchangeName, "with type", c.config.exchange.Type, "and with routing keys", retryNowPatterns)
 
-	err = amqpChannel.QueueBind(config.queue.Name, matchAllPattern, retryNowExchangeName, false, nil)
+	err = amqpChannel.QueueBind(c.config.queue.Name, matchAllPattern, retryNowExchangeName, false, nil)
 
 	if err != nil {
 		return err
 	}
 
-	config.Logger.Info("Created the bindings for queue ", config.queue.Name, "to exchange", retryNowExchangeName, "with type", config.exchange.Type, "and with routing keys", retryNowPatterns)
+	c.config.Logger.Info("Created the bindings for queue ", c.config.queue.Name, "to exchange", retryNowExchangeName, "with type", c.config.exchange.Type, "and with routing keys", retryNowPatterns)
 
 	return nil
 }
 
+func (c *Consumer) consumeQueue() error {
 
-func consumeQueue(amqpChannel *amqp.Channel, config ConsumerConfig, messageChannel chan <- Message) error {
-
-	msgs, err := amqpChannel.Consume(
-		config.queue.Name, // queue
-		"",                // consumer
-		false,             // auto-ack
-		false,             // exclusive
-		false,             // no-local
-		false,             // no-wait
-		nil,               // args
+	msgs, err := c.consumerChannels.mainChannel.Consume(
+		c.config.queue.Name, // queue
+		"",                  // consumer
+		false,               // auto-ack
+		false,               // exclusive
+		false,               // no-local
+		false,               // no-wait
+		nil,                 // args
 	)
 
 	if err != nil {
 		return err
 	}
 
-	config.Logger.Info("Queues bound, good to go")
+	c.config.Logger.Info("Queues bound, good to go")
 
 	go func() {
 		for d := range msgs {
-			messageChannel <- &amqpMessage{
+			c.Messages <- &amqpMessage{
 				delivery:               d,
-				amqpChannel:            amqpChannel,
-				retryLimit:             config.queue.RetryLimit,
-				retryLaterExchangeName: config.exchange.RetryLater,
-				dleExchangeName:        config.exchange.DLE,
+				amqpChannel:            c.consumerChannels.dleChannel,
+				retryLimit:             c.config.queue.RetryLimit,
+				retryLaterExchangeName: c.config.exchange.RetryLater,
+				dleExchangeName:        c.config.exchange.DLE,
 			}
 		}
 	}()

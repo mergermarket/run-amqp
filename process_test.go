@@ -24,7 +24,6 @@ func TestConsumerProcessesMessages(t *testing.T) {
 
 	consumer := &Consumer{
 		Messages: messages,
-		logger:   &testLogger{t},
 	}
 
 	handler := &alwaysAckingHandler{}
