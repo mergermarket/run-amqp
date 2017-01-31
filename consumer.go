@@ -78,7 +78,7 @@ func (c *Consumer) setUpConnection() {
 	c.QueuesBound <- true
 }
 
-func allQueuesReady(signals ...<-chan bool) (allSuccessful bool) {
+func allQueuesReady(signals ...<-chan bool)  bool {
 	var wg sync.WaitGroup
 	isAnyUnSuccessful := false
 	wg.Add(len(signals))
