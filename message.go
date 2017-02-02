@@ -90,7 +90,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 			return err
 		}
 
-		return m.retryChannel.Publish(m.retryExchangeName, m.delivery.RoutingKey, false, false, payload)
+		return m.dleChannel.Publish(m.retryExchangeName, m.delivery.RoutingKey, false, false, payload)
 	}
 
 	return m.delivery.Reject(true)

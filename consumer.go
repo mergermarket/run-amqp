@@ -58,9 +58,9 @@ func (c *Consumer) setUpConnection() {
 	dleQueueReady := make(chan bool)
 	retryQueueReady := make(chan bool)
 
-	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.setUpMainExchangeWithQueue)
-	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.setUpDeadLetterExchangeWithQueue)
-	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.setUpRetryExchangeWithQueue)
+	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.setUpMainExchangeWithQueue, c.config.queue.Name)
+	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.setUpDeadLetterExchangeWithQueue, c.config.queue.DLQ)
+	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.setUpRetryExchangeWithQueue, c.config.queue.RetryLater)
 
 	isReady := allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
 
@@ -99,10 +99,10 @@ func allQueuesReady(signals ...<-chan bool) bool {
 
 }
 
-func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error) {
+func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error, description string) {
 
 	go func() {
-		for channel := range connectionManager.OpenChannels() {
+		for channel := range connectionManager.OpenChannel(description) {
 			err := setUpExchangeWithQueue(channel)
 			if err != nil {
 				c.config.Logger.Error(err)
@@ -117,7 +117,7 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
 	c.consumerChannels.mainChannel = amqpChannel
 
-	c.config.Logger.Debug(fmt.Sprintf(`passively checking the exchange: "%s" of type: "%s" and binding the queue: "%s" to it.`, c.config.exchange.Name, c.config.exchange.Type, c.config.queue.Name))
+	c.config.Logger.Debug(fmt.Sprintf(`asserting the exchange: "%s" of type: "%s" and binding the queue: "%s" to it.`, c.config.exchange.Name, c.config.exchange.Type, c.config.queue.Name))
 
 	err := makeExchange(amqpChannel, c.config.exchange.Name, c.config.exchange.Type)
 

@@ -1,12 +1,15 @@
 package runamqp
 
 import (
+	"github.com/mergermarket/run-amqp/helpers"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestWorkerPool(t *testing.T) {
+
+	logger := helpers.NewTestLogger(t)
 	numberOfJobs := 10
 
 	poolCount := &workerPoolCount{}
@@ -20,7 +23,7 @@ func TestWorkerPool(t *testing.T) {
 	messages := make(chan Message, 10)
 	maxWorkers := 2
 
-	startWorkers(messages, handler, maxWorkers, &testLogger{t})
+	startWorkers(messages, handler, maxWorkers, logger)
 
 	for i := 0; i < numberOfJobs; i++ {
 		messages <- NewStubMessage("foo")
@@ -38,8 +41,9 @@ func TestWorkerPool(t *testing.T) {
 }
 
 func TestWorkerPoolPanicDoesntBreakEverything(t *testing.T) {
+	logger := helpers.NewTestLogger(t)
 	messages := make(chan Message, 2)
-	startWorkers(messages, &panicyHandler{}, 1, &testLogger{t})
+	startWorkers(messages, &panicyHandler{}, 1, logger)
 	messages <- NewStubMessage("Hi")
 
 	time.Sleep(10 * time.Millisecond)

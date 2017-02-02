@@ -10,6 +10,7 @@ import (
 type serverConnection interface {
 	GetConnections() chan *amqp.Connection
 	GetConnectionStatus() chan bool
+	getErrors() chan *amqp.Error
 }
 
 type sConnection struct {
@@ -18,6 +19,7 @@ type sConnection struct {
 	openConnection      *amqp.Connection
 	connections         chan *amqp.Connection
 	isConnectionBlocked chan bool
+	errors              chan *amqp.Error
 }
 
 func newServerConnection(URL string, logger logger) serverConnection {
@@ -39,6 +41,10 @@ func (c *sConnection) GetConnections() chan *amqp.Connection {
 
 func (c *sConnection) GetConnectionStatus() chan bool {
 	return c.isConnectionBlocked
+}
+
+func (c *sConnection) getErrors() chan *amqp.Error {
+	return c.errors
 }
 
 func (c *sConnection) connect() {
@@ -77,11 +83,11 @@ func (c *sConnection) listenForConnectionError() {
 
 	go func() {
 
-		errors := make(chan *amqp.Error)
-		c.openConnection.NotifyClose(errors)
+		c.errors = make(chan *amqp.Error)
+		c.openConnection.NotifyClose(c.errors)
 
 		for {
-			err, ok := <-errors
+			err, ok := <-c.errors
 			if err != nil && ok {
 				c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
 				c.closeOpenConnection()

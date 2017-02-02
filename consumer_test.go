@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"fmt"
+	"github.com/mergermarket/run-amqp/helpers"
 	"math/rand"
 	"testing"
 	"time"
@@ -325,6 +326,9 @@ type consumerConfigOptions struct {
 }
 
 func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
+
+	logger := helpers.NewTestLogger(t)
+
 	if config.ExchangeType == "" {
 		config.ExchangeType = Fanout
 	}
@@ -355,7 +359,7 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.ExchangeName,
 		config.ExchangeType,
 		config.Patterns,
-		&testLogger{t: t},
+		logger,
 		config.RequeueTTL,
 		config.Retries,
 		serviceName,
