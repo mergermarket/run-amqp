@@ -33,7 +33,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		t.Fatal("Is not ready to publish")
 	}
 
-	err := publisher.Publish(payload, "")
+	err := publisher.Publish(payload, "", PublishOptions{})
 
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -72,7 +72,7 @@ func TestDLQ(t *testing.T) {
 
 	assertReady(t, dlqConsumer.QueuesBound)
 
-	if err := publisher.Publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, "", PublishOptions{}); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -116,7 +116,7 @@ func TestRequeue(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, "all.notifications.bounced"); err != nil {
+	if err := publisher.Publish(payload, "all.notifications.bounced", PublishOptions{}); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -176,7 +176,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, "", PublishOptions{}); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -241,7 +241,7 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, ""); err != nil {
+	if err := publisher.Publish(payload, "", PublishOptions{}); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -277,7 +277,7 @@ func TestPatterns(t *testing.T) {
 
 	gotMessageForPattern := func(msg, pattern string) bool {
 
-		if err := publisher.Publish([]byte(msg), pattern); err != nil {
+		if err := publisher.Publish([]byte(msg), pattern, PublishOptions{}); err != nil {
 			t.Fatal("Error when Publishing the message")
 		}
 
