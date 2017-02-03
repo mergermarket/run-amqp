@@ -9,7 +9,7 @@ import (
 
 type publisher interface {
 	IsReady() bool
-	Publish(message []byte, pattern string) error
+	Publish(message []byte, pattern string, options PublishOptions) error
 }
 
 type viewModel struct {
@@ -105,7 +105,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	err := p.publisher.Publish(body, pattern)
+	err := p.publisher.Publish(body, pattern, PublishOptions{})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -16,15 +16,21 @@ type Publisher struct {
 	publishReady       bool
 }
 
+// PublishOptions contains opts for when publishing AMQP messages
+type PublishOptions struct {
+	Priority uint8
+}
+
 // Publish will publish a message to the configured exchange
-func (p *Publisher) Publish(msg []byte, pattern string) error {
+func (p *Publisher) Publish(msg []byte, pattern string, options PublishOptions) error {
 	err := p.currentAmqpChannel.Publish(
 		p.config.exchange.Name,
 		pattern,
 		false,
 		false,
 		amqp.Publishing{
-			Body: msg,
+			Body:     msg,
+			Priority: options.Priority,
 		},
 	)
 
