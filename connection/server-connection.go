@@ -20,6 +20,7 @@ type sConnection struct {
 	connections         chan *amqp.Connection
 	isConnectionBlocked chan bool
 	errors              chan *amqp.Error
+	blockings           chan amqp.Blocking
 }
 
 func newServerConnection(URL string, logger logger) serverConnection {
@@ -28,6 +29,8 @@ func newServerConnection(URL string, logger logger) serverConnection {
 		logger:              logger,
 		connections:         make(chan *amqp.Connection),
 		isConnectionBlocked: make(chan bool),
+		errors:              make(chan *amqp.Error),
+		blockings:           make(chan amqp.Blocking),
 	}
 
 	go newConnection.connect()
@@ -83,13 +86,12 @@ func (c *sConnection) listenForConnectionError() {
 
 	go func() {
 
-		c.errors = make(chan *amqp.Error)
-		c.openConnection.NotifyClose(c.errors)
+		c.errors = c.openConnection.NotifyClose(c.errors)
 
 		for {
 			err, ok := <-c.errors
 			if err != nil && ok {
-				c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: $s", err.Code, err.Reason))
+				c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: %s - will try to re-connect now.", err.Code, err.Reason))
 				c.closeOpenConnection()
 				c.connect()
 			}
@@ -102,11 +104,10 @@ func (c *sConnection) listenForConnectionBlocked() {
 
 	go func() {
 
-		blockings := make(chan amqp.Blocking)
-		c.openConnection.NotifyBlocked(blockings)
+		c.blockings = c.openConnection.NotifyBlocked(c.blockings)
 
 		for {
-			if blocking, ok := <-blockings; ok {
+			if blocking, ok := <-c.blockings; ok {
 				message := fmt.Sprintf("sConnection blocking received with TCP %t ready, with reason: %s", blocking.Active, blocking.Reason)
 				c.logger.Info(message)
 				c.isConnectionBlocked <- blocking.Active

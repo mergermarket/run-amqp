@@ -8,6 +8,7 @@ import (
 type channelConnection interface {
 	OpenChannel(connection *amqp.Connection)
 	NewChannel() chan *amqp.Channel
+	getErrors() chan *amqp.Error
 }
 
 type cConnection struct {
@@ -24,6 +25,7 @@ func newChannelConnection(logger logger, channelDescription string) channelConne
 		logger:             logger,
 		channels:           make(chan *amqp.Channel),
 		channelDescription: channelDescription,
+		errors:             make(chan *amqp.Error),
 	}
 
 	return &channel
@@ -31,11 +33,15 @@ func newChannelConnection(logger logger, channelDescription string) channelConne
 
 func (c *cConnection) OpenChannel(connection *amqp.Connection) {
 	c.connection = connection
-	c.create()
+	go c.create()
 }
 
 func (c *cConnection) NewChannel() chan *amqp.Channel {
 	return c.channels
+}
+
+func (c *cConnection) getErrors() chan *amqp.Error {
+	return c.errors
 }
 
 func (c *cConnection) create() {
@@ -51,20 +57,21 @@ func (c *cConnection) create() {
 	c.logger.Debug(fmt.Sprintf(`successfully opened a new channel for "%s"`, c.channelDescription))
 	c.openChannel = openChannel
 	c.listenForChannelError()
-	c.channels <- openChannel
+	func() {
+		c.channels <- openChannel
+	}()
 }
 
 func (c *cConnection) listenForChannelError() {
 
 	go func() {
 
-		c.errors = make(chan *amqp.Error)
-		c.openChannel.NotifyClose(c.errors)
+		c.errors = c.openChannel.NotifyClose(c.errors)
 
 		for {
 			err, ok := <-c.errors
 			if err != nil && ok {
-				c.logger.Error(fmt.Sprintf(`something bad happend with channel opened for "%s" with error code : "%d" reason: "%s"`, c.channelDescription, err.Code, err.Reason))
+				c.logger.Error(fmt.Sprintf(`something bad happend with channel opened for "%s" with error code : "%d" reason: "%s" - will try to re-open channel`, c.channelDescription, err.Code, err.Reason))
 				c.closeOpenChannel()
 				c.create()
 			}

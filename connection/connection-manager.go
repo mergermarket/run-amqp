@@ -30,21 +30,18 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 		channelConnections: make([]channelConnection, 0),
 	}
 
-	go func() {
-		for {
-			select {
-			case conn := <-newManager.connections:
-				newManager.openConnection = conn
-				for _, channelConnection := range newManager.channelConnections {
-					channelConnection.OpenChannel(conn)
-				}
-
-			}
-
-		}
-	}()
+	go newManager.listenForNewOpenConnections()
 
 	return &newManager
+}
+
+func (m *manager) listenForNewOpenConnections() {
+	for conn := range m.connections {
+		m.openConnection = conn
+		for _, channelConnection := range m.channelConnections {
+			channelConnection.OpenChannel(conn)
+		}
+	}
 }
 
 func (m *manager) OpenChannel(description string) chan *amqp.Channel {
