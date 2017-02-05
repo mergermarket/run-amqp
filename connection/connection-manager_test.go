@@ -9,6 +9,20 @@ import (
 
 func TestNewConnectionManager_OpenChannel(t *testing.T) {
 	logger := helpers.NewTestLogger(t)
+
+	t.Run("should open a managed connection with channel", func(t *testing.T) {
+
+		manager := NewConnectionManager(testRabbitURI, logger)
+
+		channel := manager.OpenChannel("test channel")
+
+		select {
+		case <-channel:
+		case <-time.After(2 * time.Second):
+			t.Fatal("failed to get first channels in time")
+		}
+	})
+
 	t.Run("should re-open connections and all the associated channels due to some connection error", func(t *testing.T) {
 
 		manager := NewConnectionManager(testRabbitURI, logger)
