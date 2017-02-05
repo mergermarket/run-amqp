@@ -32,8 +32,7 @@ func TestChannelConnection_OpenChannel(t *testing.T) {
 
 		}
 
-		errors := channelConnection.getErrors()
-		errors <- amqp.ErrClosed
+		channelConnection.sendError(amqp.ErrClosed)
 
 		select {
 		case <-channelConnection.NewChannel():

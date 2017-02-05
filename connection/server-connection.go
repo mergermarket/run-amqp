@@ -10,7 +10,7 @@ import (
 type serverConnection interface {
 	GetConnections() chan *amqp.Connection
 	GetConnectionStatus() chan bool
-	getErrors() chan *amqp.Error
+	sendError(err *amqp.Error)
 }
 
 type sConnection struct {
@@ -46,8 +46,8 @@ func (c *sConnection) GetConnectionStatus() chan bool {
 	return c.isConnectionBlocked
 }
 
-func (c *sConnection) getErrors() chan *amqp.Error {
-	return c.errors
+func (c *sConnection) sendError(err *amqp.Error) {
+	c.errors <- err
 }
 
 func (c *sConnection) connect() {

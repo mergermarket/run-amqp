@@ -13,7 +13,6 @@ func TestSConnection_GetConnections(t *testing.T) {
 	logger := helpers.NewTestLogger(t)
 	t.Run("should reconnect after an error has occured", func(t *testing.T) {
 		server := newServerConnection(testRabbitURI, logger)
-		errors := server.getErrors()
 
 		connections := server.GetConnections()
 
@@ -25,7 +24,7 @@ func TestSConnection_GetConnections(t *testing.T) {
 
 		}
 
-		errors <- amqp.ErrClosed
+		server.sendError(amqp.ErrClosed)
 
 		select {
 		case <-connections:

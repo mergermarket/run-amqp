@@ -8,7 +8,7 @@ import (
 type channelConnection interface {
 	OpenChannel(connection *amqp.Connection)
 	NewChannel() chan *amqp.Channel
-	getErrors() chan *amqp.Error
+	sendError(*amqp.Error)
 }
 
 type cConnection struct {
@@ -40,8 +40,8 @@ func (c *cConnection) NewChannel() chan *amqp.Channel {
 	return c.channels
 }
 
-func (c *cConnection) getErrors() chan *amqp.Error {
-	return c.errors
+func (c *cConnection) sendError(err *amqp.Error) {
+	c.errors <- err
 }
 
 func (c *cConnection) create() {
