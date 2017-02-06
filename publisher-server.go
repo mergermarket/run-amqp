@@ -170,6 +170,8 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 		body = b
 		pattern = r.URL.Query().Get("pattern")
+		priorityUint64, _ := strconv.ParseUint(r.URL.Query().Get("priority"), 10, 8)
+		priority = uint8(priorityUint64)
 
 	}
 
