@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,7 @@ type stubPublisher struct {
 	publishCalled            bool
 	publishCalledWithMessage string
 	publishCalleWithPattern  string
+	publishCalledWithOptions PublishOptions
 	err                      error
 }
 
@@ -25,6 +27,14 @@ func (s *stubPublisher) Publish(message []byte, pattern string) error {
 	s.publishCalled = true
 	s.publishCalledWithMessage = string(message)
 	s.publishCalleWithPattern = pattern
+	return s.err
+}
+
+func (s *stubPublisher) PublishWithOptions(message []byte, pattern string, options PublishOptions) error {
+	s.publishCalled = true
+	s.publishCalledWithMessage = string(message)
+	s.publishCalleWithPattern = pattern
+	s.publishCalledWithOptions = options
 	return s.err
 }
 
@@ -214,5 +224,51 @@ func TestPublisherServer_ServeHTTP(t *testing.T) {
 			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
 		}
 
+	})
+
+	t.Run("/entry should return 200 on POST when submitting form with PublishOptions", func(t *testing.T) {
+
+		publisher := new(stubPublisher)
+		publisher.ready = true
+
+		publisherServer := newPublisherServer(publisher, testExchangeName, &testLogger{t})
+
+		w := httptest.NewRecorder()
+
+		message := "some string"
+		pattern := "pattern"
+		options := &PublishOptions{Priority: 2}
+		optionsStringified, _ := json.Marshal(options)
+
+		form := url.Values{}
+		form.Add("pattern", pattern)
+		form.Add("message", message)
+		form.Add("options", string(optionsStringified))
+
+		r, _ := http.NewRequest(http.MethodPost, "/entrywithoptions", strings.NewReader(form.Encode()))
+
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+		publisherServer.ServeHTTP(w, r)
+
+		if w.Code != http.StatusOK {
+			t.Error("expected", http.StatusOK, "but got", w.Code)
+		}
+
+		if !publisher.publishCalled {
+			t.Error("publisher.Publish should have been called but it was not")
+		}
+
+		if publisher.publishCalledWithMessage != message {
+			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
+		}
+
+		if publisher.publishCalleWithPattern != pattern {
+			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
+		}
+
+		if publisher.publishCalledWithOptions != *options {
+			t.Error("publisher.Publish should have been called with", options, "but it was called with", publisher.publishCalledWithOptions)
+		}
 	})
 }

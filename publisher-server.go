@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 type publisher interface {
 	IsReady() bool
 	Publish(message []byte, pattern string) error
+	PublishWithOptions(message []byte, pattern string, options PublishOptions) error
 }
 
 type viewModel struct {
@@ -34,6 +36,7 @@ func newPublisherServer(publisher publisher, exchangeName string, logger logger)
 	p.router = http.NewServeMux()
 	p.exchangeName = exchangeName
 	p.router.HandleFunc("/entry", p.entry)
+	p.router.HandleFunc("/entrywithoptions", p.entrywithoptions)
 	p.router.HandleFunc("/up", p.rabbitup)
 
 	t, err := template.ParseFiles("form.html")
@@ -106,6 +109,71 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := p.publisher.Publish(body, pattern)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "Written body to exchange %s", p.exchangeName)
+}
+
+func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Request) {
+	p.logger.Debug(p.exchangeName, "Entry form hit", r.Method)
+
+	if !p.publisher.IsReady() {
+		http.Error(w, "Cannot publish at the moment, please try later", http.StatusServiceUnavailable)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+
+		if err := p.form.Execute(w, p.viewModel); err != nil {
+			http.Error(w, fmt.Sprintf("Problem rendering templae %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST PLZ", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var pattern string
+	var body []byte
+	options := PublishOptions{}
+
+	if contentTypes, ok := r.Header["Content-Type"]; ok && contentTypes[0] == "application/x-www-form-urlencoded" {
+
+		err := r.ParseForm()
+
+		if err != nil {
+			http.Error(w, "Could not get the Form data", http.StatusServiceUnavailable)
+			return
+		}
+
+		pattern = r.Form.Get("pattern")
+		body = []byte(r.Form.Get("message"))
+		_ = json.Unmarshal([]byte(r.Form.Get("options")), &options)
+
+	} else {
+
+		fmt.Println("Failed?", options)
+		defer r.Body.Close()
+
+		b, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		body = b
+		pattern = r.URL.Query().Get("pattern")
+
+	}
+
+	err := p.publisher.PublishWithOptions(body, pattern, options)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
