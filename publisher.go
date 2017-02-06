@@ -46,7 +46,7 @@ func (p *Publisher) PublishWithOptions(msg []byte, pattern string, options Publi
 	}
 
 	if pattern != "" {
-		message := fmt.Sprintf(`Published "%s" with pattern "%s"`, string(msg), pattern)
+		message := fmt.Sprintf(`Published "%s" with pattern "%s" and priority "%d"`, string(msg), pattern, options.Priority)
 		p.config.Logger.Info(message)
 
 	} else {

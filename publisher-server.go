@@ -19,12 +19,13 @@ type viewModel struct {
 }
 
 type publisherServer struct {
-	router       *http.ServeMux
-	publisher    publisher
-	exchangeName string
-	form         *template.Template
-	logger       logger
-	viewModel    viewModel
+	router               *http.ServeMux
+	publisher            publisher
+	exchangeName         string
+	entryForm            *template.Template
+	entryWithOptionsForm *template.Template
+	logger               logger
+	viewModel            viewModel
 }
 
 func newPublisherServer(publisher publisher, exchangeName string, logger logger) *publisherServer {
@@ -39,13 +40,20 @@ func newPublisherServer(publisher publisher, exchangeName string, logger logger)
 	p.router.HandleFunc("/entrywithoptions", p.entrywithoptions)
 	p.router.HandleFunc("/up", p.rabbitup)
 
-	t, err := template.ParseFiles("form.html")
+	entryForm, err := template.ParseFiles("entryForm.html")
 
 	if err != nil {
-		p.logger.Error("Problem parsing form.html template", err)
+		p.logger.Error("Problem parsing entryForm.html template", err)
 	}
 
-	p.form = t
+	entryWithOptionsForm, err := template.ParseFiles("entryWithOptionsForm.html")
+
+	if err != nil {
+		p.logger.Error("Problem parsing entryWithOptionsForm.html template", err)
+	}
+
+	p.entryForm = entryForm
+	p.entryWithOptionsForm = entryWithOptionsForm
 	p.viewModel = viewModel{
 		ExchangeName: exchangeName,
 	}
@@ -67,7 +75,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
-		if err := p.form.Execute(w, p.viewModel); err != nil {
+		if err := p.entryForm.Execute(w, p.viewModel); err != nil {
 			http.Error(w, fmt.Sprintf("Problem rendering templae %v", err), http.StatusInternalServerError)
 		}
 		return
@@ -128,7 +136,7 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 	if r.Method == http.MethodGet {
 
-		if err := p.form.Execute(w, p.viewModel); err != nil {
+		if err := p.entryWithOptionsForm.Execute(w, p.viewModel); err != nil {
 			http.Error(w, fmt.Sprintf("Problem rendering templae %v", err), http.StatusInternalServerError)
 		}
 		return
