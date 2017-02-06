@@ -24,9 +24,7 @@ type Publisher struct {
 
 // Publish will publish a message to the configured exchange
 func (p *Publisher) Publish(msg []byte, pattern string) error {
-	return p.PublishWithOptions(msg, pattern, PublishOptions{
-		Priority: 2,
-	})
+	return p.PublishWithOptions(msg, pattern, PublishOptions{})
 }
 
 // PublishWithOptions will publish a message with additional options
