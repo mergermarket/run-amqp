@@ -1,11 +1,11 @@
 package runamqp
 
 import (
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 type publisher interface {
@@ -141,7 +141,7 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 	var pattern string
 	var body []byte
-	options := PublishOptions{}
+	var priority uint8
 
 	if contentTypes, ok := r.Header["Content-Type"]; ok && contentTypes[0] == "application/x-www-form-urlencoded" {
 
@@ -154,11 +154,11 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 		pattern = r.Form.Get("pattern")
 		body = []byte(r.Form.Get("message"))
-		_ = json.Unmarshal([]byte(r.Form.Get("options")), &options)
+		priorityUint64, _ := strconv.ParseUint(r.Form.Get("priority"), 10, 8)
+		priority = uint8(priorityUint64)
 
 	} else {
 
-		fmt.Println("Failed?", options)
 		defer r.Body.Close()
 
 		b, err := ioutil.ReadAll(r.Body)
@@ -173,7 +173,7 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 	}
 
-	err := p.publisher.PublishWithOptions(body, pattern, options)
+	err := p.publisher.PublishWithOptions(body, pattern, PublishOptions{Priority: priority})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
