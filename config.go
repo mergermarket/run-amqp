@@ -10,7 +10,7 @@ type logger interface {
 	Debug(...interface{})
 }
 
-type connection struct {
+type connectionConfig struct {
 	URL    string
 	Logger logger
 }
@@ -36,15 +36,15 @@ type queue struct {
 	Patterns   []string
 }
 
-// PublisherConfig is used to create a connection to an exchange for publishing messages to
+// PublisherConfig is used to create a connectionConfig to an exchange for publishing messages to
 type PublisherConfig struct {
-	connection
+	connectionConfig
 	exchange exchange
 }
 
-// ConsumerConfig is used to create a connection to an exchange with a corresponding queue to listen to messages on
+// ConsumerConfig is used to create a connectionConfig to an exchange with a corresponding queue to listen to messages on
 type ConsumerConfig struct {
-	connection
+	connectionConfig
 	exchange exchange
 	queue    queue
 }
@@ -58,7 +58,7 @@ func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
 func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) PublisherConfig {
 
 	return PublisherConfig{
-		connection: connection{
+		connectionConfig: connectionConfig{
 			URL:    URL,
 			Logger: logger,
 		},
@@ -80,7 +80,7 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 	queueName := fmt.Sprintf("%s-for-%s", exchangeName, serviceName)
 
 	return ConsumerConfig{
-		connection: connection{
+		connectionConfig: connectionConfig{
 			URL:    URL,
 			Logger: logger,
 		},

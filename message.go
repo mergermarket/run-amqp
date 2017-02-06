@@ -15,11 +15,12 @@ type Message interface {
 }
 
 type amqpMessage struct {
-	delivery               amqp.Delivery
-	amqpChannel            *amqp.Channel
-	retryLimit             int
-	retryLaterExchangeName string
-	dleExchangeName        string
+	delivery          amqp.Delivery
+	dleChannel        *amqp.Channel
+	retryChannel      *amqp.Channel
+	retryLimit        int
+	retryExchangeName string
+	dleExchangeName   string
 }
 
 // Body returns the body of the AMQP message
@@ -50,7 +51,7 @@ func (m *amqpMessage) Nack(reason string) error {
 		Timestamp: time.Now(),
 	}
 
-	err = m.amqpChannel.Publish(m.dleExchangeName, m.delivery.RoutingKey, false, false, payload)
+	err = m.dleChannel.Publish(m.dleExchangeName, m.delivery.RoutingKey, false, false, payload)
 
 	return err
 }
@@ -89,7 +90,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 			return err
 		}
 
-		return m.amqpChannel.Publish(m.retryLaterExchangeName, m.delivery.RoutingKey, false, false, payload)
+		return m.dleChannel.Publish(m.retryExchangeName, m.delivery.RoutingKey, false, false, payload)
 	}
 
 	return m.delivery.Reject(true)

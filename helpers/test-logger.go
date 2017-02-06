@@ -1,9 +1,15 @@
-package runamqp
+package helpers
 
 import "testing"
 
 type testLogger struct {
 	t *testing.T
+}
+
+func NewTestLogger(t *testing.T) *testLogger {
+	return &testLogger{
+		t: t,
+	}
 }
 
 func (t *testLogger) Info(items ...interface{}) {

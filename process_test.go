@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"github.com/mergermarket/run-amqp/helpers"
 	"testing"
 	"time"
 )
@@ -21,10 +22,15 @@ func (a *alwaysAckingHandler) Name() string {
 func TestConsumerProcessesMessages(t *testing.T) {
 
 	messages := make(chan Message)
+	logger := helpers.NewTestLogger(t)
 
 	consumer := &Consumer{
 		Messages: messages,
-		logger:   &testLogger{t},
+		config: ConsumerConfig{
+			connectionConfig: connectionConfig{
+				Logger: logger,
+			},
+		},
 	}
 
 	handler := &alwaysAckingHandler{}

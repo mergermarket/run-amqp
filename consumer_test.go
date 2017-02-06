@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"fmt"
+	"github.com/mergermarket/run-amqp/helpers"
 	"math/rand"
 	"testing"
 	"time"
@@ -24,14 +25,13 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
 
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertReady(t, publisher.PublishReady)
+
 	consumer := NewConsumer(consumerConfig)
 
 	assertReady(t, consumer.QueuesBound)
-
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-	if ok := <-publisher.PublishReady; !ok {
-		t.Fatal("Is not ready to publish")
-	}
 
 	err := publisher.Publish(payload, "")
 
@@ -50,6 +50,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	if err != nil {
 		t.Fatal("Error when Acking the message")
 	}
+
 }
 
 func TestDLQ(t *testing.T) {
@@ -325,6 +326,9 @@ type consumerConfigOptions struct {
 }
 
 func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
+
+	logger := helpers.NewTestLogger(t)
+
 	if config.ExchangeType == "" {
 		config.ExchangeType = Fanout
 	}
@@ -355,7 +359,7 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.ExchangeName,
 		config.ExchangeType,
 		config.Patterns,
-		&testLogger{t: t},
+		logger,
 		config.RequeueTTL,
 		config.Retries,
 		serviceName,

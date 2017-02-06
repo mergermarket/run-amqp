@@ -62,3 +62,21 @@ func makeExchange(ch *amqp.Channel, exchangeName string, exchangeType ExchangeTy
 		nil,
 	)
 }
+
+//
+//func makeExchangePassive(ch *amqp.Channel, exchangeName string, exchangeType ExchangeType) error {
+//
+//	if exchangeType == Unrecognised {
+//		return fmt.Errorf("Unrecognised exchange type, check config")
+//	}
+//
+//	return ch.ExchangeDeclarePassive(
+//		exchangeName,
+//		string(exchangeType),
+//		durable,
+//		autoDelete,
+//		internal,
+//		nowait,
+//		nil,
+//	)
+//}

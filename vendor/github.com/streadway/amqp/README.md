@@ -35,7 +35,7 @@ Things not intended to be supported.
       package.  AMQP has a dynamic topology that needs all peers to agree. If
       this doesn't happen, the behavior is undefined.  Instead of producing a
       possible interface with undefined behavior, this package is designed to
-      be simple for the caller to implement the necessary connection-time
+      be simple for the caller to implement the necessary connectionConfig-time
       topology declaration so that reconnection is trivial and encapsulated in
       the caller's application code.
   * AMQP Protocol negotiation for forward or backward compatibility.

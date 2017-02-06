@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"fmt"
+	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
 	"net/http"
 )
@@ -49,7 +50,7 @@ func (p *Publisher) IsReady() bool {
 	return p.publishReady
 }
 
-// NewPublisher returns a function to send messages to the exchange defined in your config
+// NewPublisher returns a function to send messages to the exchange defined in your config. This will create a managed connection to rabbit, so you should only create this once in your application.
 func NewPublisher(config PublisherConfig) *Publisher {
 	p := new(Publisher)
 	p.config = config
@@ -65,8 +66,8 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Publisher) listenForOpenedAMQPChannel() {
-	state := makeNewConnectedRabbit(p.config.connection, p.config.exchange)
-	for ch := range state.newlyOpenedChannels {
+	connectionManager := connection.NewConnectionManager(p.config.URL, p.config.Logger)
+	for ch := range connectionManager.OpenChannel(p.config.exchange.Name) {
 		p.currentAmqpChannel = ch
 		p.publishReady = true
 		p.PublishReady <- true

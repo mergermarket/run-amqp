@@ -1,12 +1,13 @@
 package runamqp
 
 import (
+	"github.com/mergermarket/run-amqp/helpers"
 	"testing"
 )
 
 func TestItDerivesConsumerExchanges(t *testing.T) {
 
-	logger := &testLogger{t: t}
+	logger := helpers.NewTestLogger(t)
 
 	consumerConfig := NewConsumerConfig(
 		testRabbitURI,
@@ -56,12 +57,14 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 }
 
 func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
+	logger := helpers.NewTestLogger(t)
+
 	consumerConfig := NewConsumerConfig(
 		testRabbitURI,
 		"exchange",
 		Fanout,
 		noPatterns,
-		&testLogger{t: t},
+		logger,
 		200,
 		testRequeueLimit,
 		"service",
@@ -77,13 +80,14 @@ func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 }
 
 func TestItSetsPatternsOnQueue(t *testing.T) {
+	logger := helpers.NewTestLogger(t)
 	pattern := "pretty.pattern"
 	consumerConfig := NewConsumerConfig(
 		testRabbitURI,
 		"exchange",
 		Fanout,
 		[]string{pattern},
-		&testLogger{t: t},
+		logger,
 		200,
 		testRequeueLimit,
 		"service",

@@ -55,13 +55,13 @@ func (s *stubMessage) Body() []byte {
 // Ack ...
 func (s *stubMessage) Ack() error {
 	if s.calls.requeueCalled {
-		return fmt.Errorf("You cannot Ack a message that is previously been Requeued.")
+		return fmt.Errorf("you cannot Ack a message that is previously been Requeued")
 	}
 	if s.calls.nackCalled {
-		return fmt.Errorf("You cannot Ack a message that is previously been Nacked.")
+		return fmt.Errorf("you cannot Ack a message that is previously been Nacked")
 	}
 	if s.calls.ackCalled {
-		return fmt.Errorf("You cannot Ack a message that is previously been Acked.")
+		return fmt.Errorf("you cannot Ack a message that is previously been Acked")
 	}
 	s.calls.ackCalled = true
 	return nil
@@ -70,13 +70,13 @@ func (s *stubMessage) Ack() error {
 // nackCalls ...
 func (s *stubMessage) Nack(reason string) error {
 	if s.calls.ackCalled {
-		return fmt.Errorf("You cannot Nack a message that is previously been Acked.")
+		return fmt.Errorf("you cannot Nack a message that is previously been Acked")
 	}
 	if s.calls.requeueCalled {
-		return fmt.Errorf("You cannot Nack a message that is previously been Requeued.")
+		return fmt.Errorf("you cannot Nack a message that is previously been Requeued")
 	}
 	if s.calls.nackCalled {
-		return fmt.Errorf("You cannot Nack a message that is previously been Nacked.")
+		return fmt.Errorf("you cannot Nack a message that is previously been Nacked")
 	}
 
 	s.calls.nackCalled = true
@@ -87,13 +87,13 @@ func (s *stubMessage) Nack(reason string) error {
 // requeueCalls will obviously not "really" requeue!
 func (s *stubMessage) Requeue(reason string) error {
 	if s.calls.ackCalled {
-		return fmt.Errorf("You cannot Requeue a message that is previously been Acked.")
+		return fmt.Errorf("you cannot Requeue a message that is previously been Acked")
 	}
 	if s.calls.nackCalled {
-		return fmt.Errorf("You cannot Requeue a message that is previously been Nacked.")
+		return fmt.Errorf("you cannot Requeue a message that is previously been Nacked")
 	}
 	if s.calls.requeueCalled {
-		return fmt.Errorf("You cannot Requeue a message that is previously been Re-queued.")
+		return fmt.Errorf("you cannot Requeue a message that is previously been Re-queued")
 	}
 
 	s.calls.requeueCalled = true
