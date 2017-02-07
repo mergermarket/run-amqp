@@ -120,7 +120,7 @@
         </fieldset>
         <fieldset>
             <legend><span class="number">2</span> Priority</legend>
-            <textarea rows="10" name="priority" placeholder='Send message priority to "{{.ExchangeName}}" exchange'></textarea>
+            <input type="number" min="0" max="9" name="priority" placeholder="Optional message priority 1-9">
         </fieldset>
         <input type="submit" value="Send" />
     </form>
