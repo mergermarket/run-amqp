@@ -10,7 +10,7 @@ import (
 // PublishOptions will enable options being sent with the message
 type PublishOptions struct {
 	// Priority will dictate which messages are processed by the consumers first.  The higher the number, the higher the priority
-	Priority       uint8
+	Priority uint8
 	// PublishToQueue will send the message directly to a specific existing queue and the message will not be routed to any other queue attached to the exchange
 	PublishToQueue string
 }

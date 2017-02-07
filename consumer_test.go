@@ -27,7 +27,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	consumer1Config := newTestConsumerConfig(t, consumerConfigOptions{})
 	consumer2Config := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumer1Config.exchange.Name,
-		ServiceName: consumer1Config.queue.Name + "-second",
+		ServiceName:  consumer1Config.queue.Name + "-second",
 	})
 
 	publisher := NewPublisher(consumer1Config.NewPublisherConfig())
