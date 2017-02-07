@@ -79,6 +79,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	var pattern string
 	var body []byte
 	var priority uint8
+	var publishToQueue string
 
 	if contentTypes, ok := r.Header["Content-Type"]; ok && contentTypes[0] == "application/x-www-form-urlencoded" {
 
@@ -93,6 +94,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 		body = []byte(r.Form.Get("message"))
 		priorityUint64, _ := strconv.ParseUint(r.Form.Get("priority"), 10, 8)
 		priority = uint8(priorityUint64)
+		publishToQueue = r.Form.Get("publishToQueue")
 
 	} else {
 
@@ -109,10 +111,10 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 		pattern = r.URL.Query().Get("pattern")
 		priorityUint64, _ := strconv.ParseUint(r.URL.Query().Get("priority"), 10, 8)
 		priority = uint8(priorityUint64)
-
+		publishToQueue = r.URL.Query().Get("queueName")
 	}
 
-	err := p.publisher.Publish(body, PublishOptions{Priority: priority, Pattern: pattern})
+	err := p.publisher.Publish(body, PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

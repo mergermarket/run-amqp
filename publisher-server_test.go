@@ -156,11 +156,13 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 		message := "some string"
 		pattern := "pattern"
 		var priority uint8 = 2
+		publishToQueue := ""
 
 		form := url.Values{}
 		form.Add("pattern", pattern)
 		form.Add("message", message)
 		form.Add("priority", strconv.Itoa(int(priority)))
+		form.Add("publishToQueue", publishToQueue)
 
 		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(form.Encode()))
 
@@ -180,7 +182,7 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 			t.Error("publisher.PublishWithOptions should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
 		}
 
-		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern}
+		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue}
 		if publisher.publishCalledWithOptions != expectedOptions {
 			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
@@ -199,12 +201,14 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 		message := "some string"
 		pattern := "pattern"
 		var priority uint8 = 2
+		publishToQueue := ""
 
 		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(message))
 
 		q := r.URL.Query()
 		q.Add("pattern", pattern)
 		q.Add("priority", strconv.Itoa(int(priority)))
+		q.Add("publishToQueue", publishToQueue)
 		r.URL.RawQuery = q.Encode()
 
 		publisherServer.ServeHTTP(w, r)
@@ -221,7 +225,7 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 			t.Error("publisher.PublishWithOptions should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
 		}
 
-		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern}
+		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue}
 		if publisher.publishCalledWithOptions != expectedOptions {
 			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
