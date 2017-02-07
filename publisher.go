@@ -41,7 +41,6 @@ func (p *Publisher) Publish(msg []byte, options PublishOptions) error {
 		pattern = options.PublishToQueue
 	}
 
-
 	err := p.currentAmqpChannel.Publish(
 		exchangeName,
 		pattern,
@@ -93,8 +92,21 @@ func (p *Publisher) listenForOpenedAMQPChannel() {
 	connectionManager := connection.NewConnectionManager(p.config.URL, p.config.Logger)
 	for ch := range connectionManager.OpenChannel(p.config.exchange.Name) {
 		p.currentAmqpChannel = ch
+		p.listenForReturnedMessages()
 		p.publishReady = true
 		p.PublishReady <- true
 		p.config.Logger.Info("Ready to publish")
 	}
+}
+func (p *Publisher) listenForReturnedMessages() {
+	if p.currentAmqpChannel != nil {
+		returnMessage := make(chan amqp.Return)
+		p.currentAmqpChannel.NotifyReturn(returnMessage)
+		go func() {
+			for msg := range returnMessage {
+				p.config.Logger.Info(fmt.Sprintf(`message that was published but was returned, ExchangeName: "%s" RoutingKey: "%s" ReplyText: "%s"`, msg.Exchange, msg.RoutingKey, msg.ReplyText))
+			}
+		}()
+	}
+
 }
