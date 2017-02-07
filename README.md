@@ -1,4 +1,4 @@
-# run-amqp
+# RunAMQP
 
 [![Build Status](https://travis-ci.org/mergermarket/run-amqp.svg?branch=master)](https://travis-ci.org/mergermarket/run-amqp)[![GoDoc](https://godoc.org/github.com/mergermarket/run-amqp?status.svg)](https://godoc.org/github.com/mergermarket/run-amqp)
 
@@ -10,24 +10,33 @@ Given this set up, the library provides simple interfaces to register `MessageHa
 
 [The best place for documentation is of course go doc](https://godoc.org/github.com/mergermarket/run-amqp)
 
-## running tests
+## Running Tests
 
-You will need
-- Go installed and workspace set up as described in https://golang.org/doc/code.html
-- Docker & Docker Compose
+Prerequisites:
+- Install Golang and workspace as described in https://golang.org/doc/code.html
+- Install Docker and Docker Compose
+- Checkout RunAMQP into: `$GOPATH/src/github.com/mergermarket/run-amqp`.
 
-Check out into `$GOPATH/src/github.com/mergermarket/run-amqp`.
+Run all tests:
 
-`docker-compose run runamqp`
+    docker-compose run runamqp
 
-Specific test
+Run specific test:
 
-`docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries`
+    docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries
 
-There is a test harness app in `sample` so you can play around with it a bit
+## Test Harness Application
 
-`docker-compose run --service-ports sampleapp`
+A test harness app exists in `/sample` so you can play around with it a bit:
 
-## Exchanges & Queues autocreated
+    docker-compose run --service-ports sampleapp
 
-todo!
+View the test harness app at `/entry`
+
+    http://localhost:8080/entry
+
+## Usage
+
+Read the [Godocs](https://godoc.org/github.com/mergermarket/run-amqp) for a comprehensive guide on how to implement RunAMQP.
+
+A good place to see RunAMQP used is in the test harness app mentioned above.
