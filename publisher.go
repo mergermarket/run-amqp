@@ -7,9 +7,12 @@ import (
 	"net/http"
 )
 
-// PublishOptions will enable options being sen with the message
+// PublishOptions will enable options being sent with the message
 type PublishOptions struct {
+	// Priority will dictate which messages are processed by the consumers first.  The higher the number, the higher the priority
 	Priority uint8
+	// PublishToQueue will send the message directly to a specific existing queue and the message will not be routed to any other queue attached to the exchange
+	PublishToQueue string
 }
 
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
@@ -29,10 +32,17 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 
 // PublishWithOptions will publish a message with additional options
 func (p *Publisher) PublishWithOptions(msg []byte, pattern string, options PublishOptions) error {
+
+	exchangeName := p.config.exchange.Name
+	if options.PublishToQueue != "" {
+		exchangeName = ""
+		pattern = options.PublishToQueue
+	}
+
 	err := p.currentAmqpChannel.Publish(
-		p.config.exchange.Name,
+		exchangeName,
 		pattern,
-		false,
+		true,
 		false,
 		amqp.Publishing{
 			Body:     msg,
