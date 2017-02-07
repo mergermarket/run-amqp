@@ -7,6 +7,11 @@ import (
 	"net/http"
 )
 
+// PublishOptions will enable options being sen with the message
+type PublishOptions struct {
+	Priority uint8
+}
+
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
 type Publisher struct {
 	PublishReady chan bool
@@ -19,13 +24,19 @@ type Publisher struct {
 
 // Publish will publish a message to the configured exchange
 func (p *Publisher) Publish(msg []byte, pattern string) error {
+	return p.PublishWithOptions(msg, pattern, PublishOptions{})
+}
+
+// PublishWithOptions will publish a message with additional options
+func (p *Publisher) PublishWithOptions(msg []byte, pattern string, options PublishOptions) error {
 	err := p.currentAmqpChannel.Publish(
 		p.config.exchange.Name,
 		pattern,
 		false,
 		false,
 		amqp.Publishing{
-			Body: msg,
+			Body:     msg,
+			Priority: options.Priority,
 		},
 	)
 
@@ -35,7 +46,7 @@ func (p *Publisher) Publish(msg []byte, pattern string) error {
 	}
 
 	if pattern != "" {
-		message := fmt.Sprintf(`Published "%s" with pattern "%s"`, string(msg), pattern)
+		message := fmt.Sprintf(`Published "%s" with pattern "%s" and priority "%d"`, string(msg), pattern, options.Priority)
 		p.config.Logger.Info(message)
 
 	} else {
