@@ -30,7 +30,7 @@
         .form-style-5 input[type="number"],
         .form-style-5 input[type="search"],
         .form-style-5 input[type="time"],
-        .form-style-5 input[type="URL"],
+        .form-style-5 input[type="url"],
         .form-style-5 textarea,
         .form-style-5 select {
             font-family: Georgia, "Times New Roman", Times, serif;
@@ -59,7 +59,7 @@
         .form-style-5 input[type="number"]:focus,
         .form-style-5 input[type="search"]:focus,
         .form-style-5 input[type="time"]:focus,
-        .form-style-5 input[type="URL"]:focus,
+        .form-style-5 input[type="url"]:focus,
         .form-style-5 textarea:focus,
         .form-style-5 select:focus{
             background: #d2d9dd;
@@ -110,16 +110,21 @@
 <div class="form-style-5">
     <form method="post" action="/entry">
         <fieldset>
-            <legend><span class="number">1</span> Pattern</legend>
+            <legend><span class="number">1</span> Message</legend>
+            <textarea rows="10" name="message" placeholder='Your message to publish to "{{.ExchangeName}}" exchange'></textarea>
+        </fieldset>
+        <fieldset>
+            <legend><span class="number">2</span> Pattern (optional)</legend>
             <input type="text" name="pattern" placeholder="Routing key pattern">
             </select>
         </fieldset>
         <fieldset>
-            <legend><span class="number">2</span> Message</legend>
-            <textarea rows="10" name="message" placeholder='Your message to publish to "{{.ExchangeName}}" exchange'></textarea>
+            <legend><span class="number">3</span> Priority (optional)</legend>
+            <input type="number" min="0" max="9" name="priority" placeholder="Optional message priority 1-9">
         </fieldset>
         <input type="submit" value="Send" />
     </form>
 </div>
+
 </body>
 </html>

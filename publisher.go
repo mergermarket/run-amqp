@@ -27,13 +27,8 @@ type Publisher struct {
 	publishReady       bool
 }
 
-// Publish will publish a message to the configured exchange
-func (p *Publisher) Publish(msg []byte, pattern string) error {
-	return p.PublishWithOptions(msg, PublishOptions{Pattern: pattern})
-}
-
-// PublishWithOptions will publish a message with additional options
-func (p *Publisher) PublishWithOptions(msg []byte, options PublishOptions) error {
+// Publish will publish a message to an exchange
+func (p *Publisher) Publish(msg []byte, options PublishOptions) error {
 
 	exchangeName := p.config.exchange.Name
 	pattern := options.Pattern

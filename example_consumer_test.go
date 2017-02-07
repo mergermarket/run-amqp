@@ -65,7 +65,7 @@ func ExampleConsumer() {
 	}
 
 	// Publish a message
-	if err := publisher.Publish([]byte("Hello, world"), ""); err != nil {
+	if err := publisher.Publish([]byte("Hello, world"), PublishOptions{}); err != nil {
 		log.Fatal("Error when Publishing the message")
 	}
 

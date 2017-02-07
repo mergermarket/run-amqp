@@ -16,7 +16,6 @@ type stubPublisher struct {
 	ready                    bool
 	publishCalled            bool
 	publishCalledWithMessage string
-	publishCalleWithPattern  string
 	publishCalledWithOptions PublishOptions
 	err                      error
 }
@@ -25,18 +24,10 @@ func (s *stubPublisher) IsReady() bool {
 	return s.ready
 }
 
-func (s *stubPublisher) Publish(message []byte, pattern string) error {
-	s.publishCalled = true
-	s.publishCalledWithMessage = string(message)
-	s.publishCalleWithPattern = pattern
-	return s.err
-}
-
-func (s *stubPublisher) PublishWithOptions(message []byte, options PublishOptions) error {
+func (s *stubPublisher) Publish(message []byte, options PublishOptions) error {
 	s.publishCalled = true
 	s.publishCalledWithMessage = string(message)
 	s.publishCalledWithOptions = options
-	s.publishCalleWithPattern = options.Pattern
 	return s.err
 }
 
@@ -153,88 +144,6 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 
 	})
 
-	t.Run("/entry should return 200 on POST when publishing succeeds", func(t *testing.T) {
-
-		publisher := new(stubPublisher)
-		publisher.ready = true
-
-		publisherServer := newPublisherServer(publisher, testExchangeName, logger)
-
-		w := httptest.NewRecorder()
-
-		message := "some string"
-		pattern := "pattern"
-
-		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(message))
-
-		q := r.URL.Query()
-		q.Add("pattern", pattern)
-		r.URL.RawQuery = q.Encode()
-
-		publisherServer.ServeHTTP(w, r)
-
-		if w.Code != http.StatusOK {
-			t.Error("expected", http.StatusOK, "but got", w.Code)
-		}
-
-		if !publisher.publishCalled {
-			t.Error("publisher.Publish should have been called but it was not")
-		}
-
-		if publisher.publishCalledWithMessage != message {
-			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
-		}
-
-		if publisher.publishCalleWithPattern != pattern {
-			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
-		}
-
-	})
-
-	t.Run("/entry should return 200 on POST when submitting form", func(t *testing.T) {
-
-		publisher := new(stubPublisher)
-		publisher.ready = true
-
-		publisherServer := newPublisherServer(publisher, testExchangeName, logger)
-
-		w := httptest.NewRecorder()
-
-		message := "some string"
-		pattern := "pattern"
-
-		form := url.Values{}
-		form.Add("pattern", pattern)
-		form.Add("message", message)
-
-		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(form.Encode()))
-
-		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-		publisherServer.ServeHTTP(w, r)
-
-		if w.Code != http.StatusOK {
-			t.Error("expected", http.StatusOK, "but got", w.Code)
-		}
-
-		if !publisher.publishCalled {
-			t.Error("publisher.Publish should have been called but it was not")
-		}
-
-		if publisher.publishCalledWithMessage != message {
-			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
-		}
-
-		if publisher.publishCalleWithPattern != pattern {
-			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
-		}
-
-	})
-}
-
-func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
-	logger := helpers.NewTestLogger(t)
-
 	t.Run("/entry should return 200 on POST when submitting form with PublishOptions", func(t *testing.T) {
 
 		publisher := new(stubPublisher)
@@ -253,7 +162,7 @@ func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
 		form.Add("message", message)
 		form.Add("priority", strconv.Itoa(int(priority)))
 
-		r, _ := http.NewRequest(http.MethodPost, "/entrywithoptions", strings.NewReader(form.Encode()))
+		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(form.Encode()))
 
 		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -291,7 +200,7 @@ func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
 		pattern := "pattern"
 		var priority uint8 = 2
 
-		r, _ := http.NewRequest(http.MethodPost, "/entrywithoptions", strings.NewReader(message))
+		r, _ := http.NewRequest(http.MethodPost, "/entry", strings.NewReader(message))
 
 		q := r.URL.Query()
 		q.Add("pattern", pattern)
@@ -318,4 +227,5 @@ func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
 		}
 
 	})
+
 }
