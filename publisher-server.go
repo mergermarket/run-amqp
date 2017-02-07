@@ -111,7 +111,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 		pattern = r.URL.Query().Get("pattern")
 		priorityUint64, _ := strconv.ParseUint(r.URL.Query().Get("priority"), 10, 8)
 		priority = uint8(priorityUint64)
-		publishToQueue = r.URL.Query().Get("queueName")
+		publishToQueue = r.URL.Query().Get("publishToQueue")
 	}
 
 	err := p.publisher.Publish(body, PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue})
