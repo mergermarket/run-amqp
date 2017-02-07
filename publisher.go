@@ -13,6 +13,8 @@ type PublishOptions struct {
 	Priority uint8
 	// PublishToQueue will send the message directly to a specific existing queue and the message will not be routed to any other queue attached to the exchange
 	PublishToQueue string
+	// Pattern is the routing key between the exchange and queues
+	Pattern string
 }
 
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
@@ -27,13 +29,14 @@ type Publisher struct {
 
 // Publish will publish a message to the configured exchange
 func (p *Publisher) Publish(msg []byte, pattern string) error {
-	return p.PublishWithOptions(msg, pattern, PublishOptions{})
+	return p.PublishWithOptions(msg, PublishOptions{Pattern: pattern})
 }
 
 // PublishWithOptions will publish a message with additional options
-func (p *Publisher) PublishWithOptions(msg []byte, pattern string, options PublishOptions) error {
+func (p *Publisher) PublishWithOptions(msg []byte, options PublishOptions) error {
 
 	exchangeName := p.config.exchange.Name
+	pattern := options.Pattern
 	if options.PublishToQueue != "" {
 		exchangeName = ""
 		pattern = options.PublishToQueue

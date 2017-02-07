@@ -42,21 +42,18 @@ func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
 		}
 
 		if !publisher.publishCalled {
-			t.Error("publisher.Publish should have been called but it was not")
+			t.Error("publisher.PublishWithOptions should have been called but it was not")
 		}
 
 		if publisher.publishCalledWithMessage != message {
-			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
+			t.Error("publisher.PublishWithOptions should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
 		}
 
-		if publisher.publishCalleWithPattern != pattern {
-			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
-		}
-
-		expectedOptions := PublishOptions{Priority: priority}
+		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern}
 		if publisher.publishCalledWithOptions != expectedOptions {
-			t.Error("publisher.Publish should have been called with", priority, "but it was called with", publisher.publishCalledWithOptions)
+			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
+
 	})
 
 	t.Run("/entry should return 200 on POST when publishing with options succeeds", func(t *testing.T) {
@@ -86,20 +83,16 @@ func TestPublisherServerEntryWithOptions_ServeHTTP(t *testing.T) {
 		}
 
 		if !publisher.publishCalled {
-			t.Error("publisher.Publish should have been called but it was not")
+			t.Error("publisher.PublishWithOptions should have been called but it was not")
 		}
 
 		if publisher.publishCalledWithMessage != message {
-			t.Error("publisher.Publish should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
+			t.Error("publisher.PublishWithOptions should have been called with", message, "but it was called with", publisher.publishCalledWithMessage)
 		}
 
-		if publisher.publishCalleWithPattern != pattern {
-			t.Error("publisher.Publish should have been called with", pattern, "but it was called with", publisher.publishCalleWithPattern)
-		}
-
-		expectedOptions := PublishOptions{Priority: priority}
+		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern}
 		if publisher.publishCalledWithOptions != expectedOptions {
-			t.Error("publisher.Publish should have been called with", priority, "but it was called with", publisher.publishCalledWithOptions)
+			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
 
 	})

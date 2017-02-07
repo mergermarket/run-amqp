@@ -337,7 +337,7 @@ func TestPublishToASpecificQueue(t *testing.T) {
 	consumerForTarget := NewConsumer(consumerConfigForTargettedQueue)
 	assertReady(t, consumerForTarget.QueuesBound)
 
-	err := publisher.PublishWithOptions(payload, "", PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
+	err := publisher.PublishWithOptions(payload, PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
 
 	if err != nil {
 		t.Fatal("Error when Publishing the message")

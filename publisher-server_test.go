@@ -20,11 +20,11 @@ func (s *stubPublisher) Publish(message []byte, pattern string) error {
 	return s.err
 }
 
-func (s *stubPublisher) PublishWithOptions(message []byte, pattern string, options PublishOptions) error {
+func (s *stubPublisher) PublishWithOptions(message []byte, options PublishOptions) error {
 	s.publishCalled = true
 	s.publishCalledWithMessage = string(message)
-	s.publishCalleWithPattern = pattern
 	s.publishCalledWithOptions = options
+	s.publishCalleWithPattern = options.Pattern
 	return s.err
 }
 

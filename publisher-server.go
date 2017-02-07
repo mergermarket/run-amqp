@@ -11,7 +11,7 @@ import (
 type publisher interface {
 	IsReady() bool
 	Publish(message []byte, pattern string) error
-	PublishWithOptions(message []byte, pattern string, options PublishOptions) error
+	PublishWithOptions(message []byte, options PublishOptions) error
 }
 
 type viewModel struct {
@@ -183,7 +183,7 @@ func (p *publisherServer) entrywithoptions(w http.ResponseWriter, r *http.Reques
 
 	}
 
-	err := p.publisher.PublishWithOptions(body, pattern, PublishOptions{Priority: priority})
+	err := p.publisher.PublishWithOptions(body, PublishOptions{Priority: priority, Pattern: pattern})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
