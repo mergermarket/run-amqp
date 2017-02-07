@@ -24,33 +24,44 @@ func init() {
 func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
 
-	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+	consumer1Config := newTestConsumerConfig(t, consumerConfigOptions{})
+	consumer2Config := newTestConsumerConfig(t, consumerConfigOptions{
+		ExchangeName: consumer1Config.exchange.Name,
+		ServiceName: consumer1Config.queue.Name + "-second",
+	})
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher := NewPublisher(consumer1Config.NewPublisherConfig())
 	assertReady(t, publisher.PublishReady)
 
-	consumer := NewConsumer(consumerConfig)
+	consumer1 := NewConsumer(consumer1Config)
+	assertReady(t, consumer1.QueuesBound)
 
-	assertReady(t, consumer.QueuesBound)
+	consumer2 := NewConsumer(consumer2Config)
+	assertReady(t, consumer2.QueuesBound)
 
 	err := publisher.Publish(payload, "")
-
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
-	message := getMessage(t, consumer.Messages)
-
+	message := getMessage(t, consumer1.Messages)
 	if string(message.Body()) != string(payload) {
-		t.Fatal("failed to publish")
+		t.Fatal("failed to publish - consumer1")
 	}
-
 	err = message.Ack()
-
 	if err != nil {
-		t.Fatal("Error when Acking the message")
+		t.Fatal("Error when Acking the message - consumer1")
 	}
+	t.Log("First consumer - done")
 
+	message = getMessage(t, consumer2.Messages)
+	if string(message.Body()) != string(payload) {
+		t.Fatal("failed to publish - consumer2")
+	}
+	err = message.Ack()
+	if err != nil {
+		t.Fatal("Error when Acking the message - consumer2")
+	}
 }
 
 func TestDLQ(t *testing.T) {
@@ -308,6 +319,45 @@ func TestPatterns(t *testing.T) {
 	}
 }
 
+func TestPublishToASpecificQueue(t *testing.T) {
+	t.Parallel()
+
+	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
+
+	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertReady(t, publisher.PublishReady)
+
+	consumer := NewConsumer(consumerConfig)
+	assertReady(t, consumer.QueuesBound)
+
+	consumerConfigForTargettedQueue := newTestConsumerConfig(t, consumerConfigOptions{
+		ExchangeName: consumerConfig.exchange.Name,
+		ServiceName:  "test-other-service",
+	})
+	consumerForTarget := NewConsumer(consumerConfigForTargettedQueue)
+	assertReady(t, consumerForTarget.QueuesBound)
+
+	err := publisher.PublishWithOptions(payload, "", PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
+
+	if err != nil {
+		t.Fatal("Error when Publishing the message")
+	}
+
+	shouldNotGetMessage(t, consumer.Messages)
+
+	message := getMessage(t, consumerForTarget.Messages)
+
+	if string(message.Body()) != string(payload) {
+		t.Fatal("failed to publish")
+	}
+
+	err = message.Ack()
+
+	if err != nil {
+		t.Fatal("Error when Acking the message")
+	}
+}
+
 func randomString(n int) string {
 	b := make([]rune, n)
 	for i := range b {
@@ -323,6 +373,7 @@ type consumerConfigOptions struct {
 	Retries      int
 	SetNoRetries bool
 	RequeueTTL   int16
+	ServiceName  string
 }
 
 func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerConfig {
@@ -354,6 +405,10 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.Retries = 0
 	}
 
+	if config.ServiceName == "" {
+		config.ServiceName = serviceName
+	}
+
 	return NewConsumerConfig(
 		"amqp://guest:guest@rabbitmq:5672/",
 		config.ExchangeName,
@@ -362,7 +417,7 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		logger,
 		config.RequeueTTL,
 		config.Retries,
-		serviceName,
+		config.ServiceName,
 	)
 }
 
@@ -386,4 +441,13 @@ func getMessage(t *testing.T, ch <-chan Message) (message Message) {
 		t.Fatal("Timedout waiting for message")
 	}
 	return
+}
+
+func shouldNotGetMessage(t *testing.T, ch <-chan Message) {
+	select {
+	case <-ch:
+		t.Fatal("Should not have received the message")
+	case <-time.After(1 * time.Second):
+		t.Log("Mesage was not received")
+	}
 }
