@@ -104,7 +104,7 @@ func (p *Publisher) listenForReturnedMessages() {
 		p.currentAmqpChannel.NotifyReturn(returnMessage)
 		go func() {
 			for msg := range returnMessage {
-				p.config.Logger.Info(fmt.Sprintf(`message that was published but was returned, ExchangeName: "%s" RoutingKey: "%s" ReplyText: "%s"`, msg.Exchange, msg.RoutingKey, msg.ReplyText))
+				p.config.Logger.Info(fmt.Sprintf(`a message that was published but returned, ExchangeName: "%s" RoutingKey: "%s" ReplyText: "%s"`, msg.Exchange, msg.RoutingKey, msg.ReplyText))
 			}
 		}()
 	}
