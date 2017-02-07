@@ -17,6 +17,10 @@ type PublishOptions struct {
 	Pattern string
 }
 
+func (p PublishOptions) String() string {
+	return fmt.Sprintf(`Priority: "%d" PublishToQueue: "%s" Pattern "%s"`, p.Priority, p.PublishToQueue, p.Pattern)
+}
+
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
 type Publisher struct {
 	PublishReady chan bool
@@ -37,6 +41,7 @@ func (p *Publisher) Publish(msg []byte, options PublishOptions) error {
 		pattern = options.PublishToQueue
 	}
 
+
 	err := p.currentAmqpChannel.Publish(
 		exchangeName,
 		pattern,
@@ -54,7 +59,7 @@ func (p *Publisher) Publish(msg []byte, options PublishOptions) error {
 	}
 
 	if pattern != "" {
-		message := fmt.Sprintf(`Published "%s" with pattern "%s" and priority "%d"`, string(msg), pattern, options.Priority)
+		message := fmt.Sprintf(`Published "%s" to exchange "%s" with options: %s`, string(msg), exchangeName, options)
 		p.config.Logger.Info(message)
 
 	} else {
