@@ -32,7 +32,7 @@ type Publisher struct {
 }
 
 // Publish will publish a message to an exchange
-func (p *Publisher) Publish(msg []byte, options PublishOptions) error {
+func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 
 	exchangeName := p.config.exchange.Name
 	pattern := options.Pattern

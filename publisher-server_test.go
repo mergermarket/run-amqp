@@ -16,7 +16,7 @@ type stubPublisher struct {
 	ready                    bool
 	publishCalled            bool
 	publishCalledWithMessage string
-	publishCalledWithOptions PublishOptions
+	publishCalledWithOptions *PublishOptions
 	err                      error
 }
 
@@ -24,7 +24,7 @@ func (s *stubPublisher) IsReady() bool {
 	return s.ready
 }
 
-func (s *stubPublisher) Publish(message []byte, options PublishOptions) error {
+func (s *stubPublisher) Publish(message []byte, options *PublishOptions) error {
 	s.publishCalled = true
 	s.publishCalledWithMessage = string(message)
 	s.publishCalledWithOptions = options
@@ -183,7 +183,7 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 		}
 
 		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue}
-		if publisher.publishCalledWithOptions != expectedOptions {
+		if *publisher.publishCalledWithOptions != expectedOptions {
 			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
 
@@ -226,7 +226,7 @@ func TestPublisherServerEntry_ServeHTTP(t *testing.T) {
 		}
 
 		expectedOptions := PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue}
-		if publisher.publishCalledWithOptions != expectedOptions {
+		if *publisher.publishCalledWithOptions != expectedOptions {
 			t.Error("publisher.PublishWithOptions should have been called with", expectedOptions, "but it was called with", publisher.publishCalledWithOptions)
 		}
 

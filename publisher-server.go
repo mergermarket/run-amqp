@@ -10,7 +10,7 @@ import (
 
 type publisher interface {
 	IsReady() bool
-	Publish(message []byte, options PublishOptions) error
+	Publish(message []byte, options *PublishOptions) error
 }
 
 type viewModel struct {
@@ -114,7 +114,9 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 		publishToQueue = r.URL.Query().Get("publishToQueue")
 	}
 
-	err := p.publisher.Publish(body, PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue})
+	options := &PublishOptions{Priority: priority, Pattern: pattern, PublishToQueue: publishToQueue}
+
+	err := p.publisher.Publish(body, options)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -128,9 +130,9 @@ func (p *publisherServer) rabbitup(w http.ResponseWriter, r *http.Request) {
 	p.logger.Debug(p.exchangeName, "Rabbit up hit")
 	if p.publisher.IsReady() {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Rabbit is up!")
+		fmt.Fprint(w, "Rabbit is up!")
 	} else {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		fmt.Fprintf(w, "Rabbit did not start up!")
+		fmt.Fprint(w, "Rabbit did not start up!")
 	}
 }

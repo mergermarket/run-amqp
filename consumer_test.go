@@ -39,7 +39,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	consumer2 := NewConsumer(consumer2Config)
 	assertReady(t, consumer2.QueuesBound)
 
-	err := publisher.Publish(payload, PublishOptions{})
+	err := publisher.Publish(payload, nil)
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
@@ -84,7 +84,7 @@ func TestDLQ(t *testing.T) {
 
 	assertReady(t, dlqConsumer.QueuesBound)
 
-	if err := publisher.Publish(payload, PublishOptions{}); err != nil {
+	if err := publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -128,7 +128,7 @@ func TestRequeue(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, PublishOptions{Pattern: "all.notifications.bounced"}); err != nil {
+	if err := publisher.Publish(payload, &PublishOptions{Pattern: "all.notifications.bounced"}); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -188,7 +188,7 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, PublishOptions{}); err != nil {
+	if err := publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -253,7 +253,7 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	assertReady(t, publisher.PublishReady)
 
-	if err := publisher.Publish(payload, PublishOptions{}); err != nil {
+	if err := publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -289,7 +289,7 @@ func TestPatterns(t *testing.T) {
 
 	gotMessageForPattern := func(msg, pattern string) bool {
 
-		if err := publisher.Publish([]byte(msg), PublishOptions{Pattern: pattern}); err != nil {
+		if err := publisher.Publish([]byte(msg), &PublishOptions{Pattern: pattern}); err != nil {
 			t.Fatal("Error when Publishing the message")
 		}
 
@@ -337,7 +337,7 @@ func TestPublishToASpecificQueue(t *testing.T) {
 	consumerForTarget := NewConsumer(consumerConfigForTargettedQueue)
 	assertReady(t, consumerForTarget.QueuesBound)
 
-	err := publisher.Publish(payload, PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
+	err := publisher.Publish(payload, &PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
 
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
