@@ -18,7 +18,7 @@ type PublishOptions struct {
 }
 
 func (p PublishOptions) String() string {
-	return fmt.Sprintf(`Priority: "%d" PublishToQueue: "%s" Pattern "%s"`, p.Priority, p.PublishToQueue, p.Pattern)
+	return fmt.Sprintf(`Priority: "%d" Publish to queue: "%s" Pattern "%s"`, p.Priority, p.PublishToQueue, p.Pattern)
 }
 
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
@@ -74,6 +74,7 @@ func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 		message := fmt.Sprintf(`Published "%s"`, string(msg))
 		p.config.Logger.Info(message)
 	}
+
 	return nil
 }
 
@@ -111,9 +112,11 @@ func (p *Publisher) listenForReturnedMessages() {
 	if p.currentAmqpChannel != nil {
 		returnMessage := make(chan amqp.Return)
 		p.currentAmqpChannel.NotifyReturn(returnMessage)
+
 		go func() {
 			for msg := range returnMessage {
-				p.config.Logger.Info(fmt.Sprintf(`a message that was published but returned, ExchangeName: "%s" RoutingKey: "%s" ReplyText: "%s"`, msg.Exchange, msg.RoutingKey, msg.ReplyText))
+				msg := fmt.Sprintf(`A message that was published but returned, Exchange name: "%s" Routing key: "%s" Reply text: "%s"`, msg.Exchange, msg.RoutingKey, msg.ReplyText)
+				p.config.Logger.Info(msg)
 			}
 		}()
 	}
