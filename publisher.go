@@ -35,10 +35,19 @@ type Publisher struct {
 func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 
 	exchangeName := p.config.exchange.Name
-	pattern := options.Pattern
-	if options.PublishToQueue != "" {
-		exchangeName = ""
-		pattern = options.PublishToQueue
+
+	var pattern string
+	var priority uint8
+
+	if options != nil {
+		pattern = options.Pattern
+
+		if options.PublishToQueue != "" {
+			exchangeName = ""
+			pattern = options.PublishToQueue
+		}
+
+		priority = options.Priority
 	}
 
 	err := p.currentAmqpChannel.Publish(
@@ -48,7 +57,7 @@ func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 		false,
 		amqp.Publishing{
 			Body:     msg,
-			Priority: options.Priority,
+			Priority: priority,
 		},
 	)
 
