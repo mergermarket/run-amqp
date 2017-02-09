@@ -127,8 +127,8 @@ func (_m *MockAMQPChannel) QueueDeclare(name string, durable bool, autoDelete bo
 	return ret0, ret1
 }
 
-func (_mr *_MockAMQPChannelRecorder) QueueDeclare(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "QueueDeclare", arg0, arg1, arg2, arg3, arg4, arg5)
+func (_mr *_MockAMQPChannelRecorder) QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args amqp.Table) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "QueueDeclare", name, durable, autoDelete, exclusive, noWait, args)
 }
 
 func (_m *MockAMQPChannel) QueueDeclarePassive(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args amqp.Table) (amqp.Queue, error) {
@@ -159,8 +159,8 @@ func (_m *MockAMQPChannel) QueueBind(name string, key string, exchange string, n
 	return ret0
 }
 
-func (_mr *_MockAMQPChannelRecorder) QueueBind(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "QueueBind", arg0, arg1, arg2, arg3, arg4)
+func (_mr *_MockAMQPChannelRecorder) QueueBind(name string, key string, exchange string, noWait bool, args amqp.Table) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "QueueBind", name, key, exchange, noWait, args)
 }
 
 func (_m *MockAMQPChannel) QueueUnbind(name string, key string, exchange string, args amqp.Table) error {
@@ -212,8 +212,8 @@ func (_m *MockAMQPChannel) ExchangeDeclare(name string, kind string, durable boo
 	return ret0
 }
 
-func (_mr *_MockAMQPChannelRecorder) ExchangeDeclare(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ExchangeDeclare", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+func (_mr *_MockAMQPChannelRecorder) ExchangeDeclare(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args amqp.Table) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ExchangeDeclare", name, kind, durable, autoDelete, internal, noWait, args)
 }
 
 func (_m *MockAMQPChannel) ExchangeDeclarePassive(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args amqp.Table) error {
