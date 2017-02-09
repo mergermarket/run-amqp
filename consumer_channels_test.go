@@ -61,7 +61,7 @@ func TestMainChannelConfiguration(t *testing.T) {
 		patterns := []string {firstPattern, secondPattern}
 
 		testLogger := helpers.NewTestLogger(t)
-		consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+		consumerConfig := NewConsumerConfig("url", testExchangeName, Topic, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
 		consumerChannels := newConsumerChannels(consumerConfig)
 
 		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.Name,
