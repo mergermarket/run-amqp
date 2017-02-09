@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"github.com/mergermarket/run-amqp/connection"
+	"time"
 )
 
 // Consumer has a channel for receiving messages
@@ -87,6 +88,7 @@ func (c *Consumer) consumeQueue() error {
 				retryLimit:        c.config.queue.RetryLimit,
 				retryExchangeName: c.config.exchange.RetryLater,
 				dleExchangeName:   c.config.exchange.DLE,
+				now:               time.Now,
 			}
 		}
 	}()

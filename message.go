@@ -22,6 +22,7 @@ type amqpMessage struct {
 	retryLimit        int
 	retryExchangeName string
 	dleExchangeName   string
+	now               func() time.Time
 }
 
 // Body returns the body of the AMQP message
@@ -49,7 +50,7 @@ func (m *amqpMessage) Nack(reason string) error {
 	payload := amqp.Publishing{
 		Body:      m.Body(),
 		Headers:   headers,
-		Timestamp: time.Now(),
+		Timestamp: m.now(),
 	}
 
 	err = m.dleChannel.Publish(m.dleExchangeName, m.delivery.RoutingKey, false, false, payload)
