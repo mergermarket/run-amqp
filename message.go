@@ -83,7 +83,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 		payload := amqp.Publishing{
 			Body:      m.Body(),
 			Headers:   headers,
-			Timestamp: time.Now(),
+			Timestamp: m.now(),
 		}
 
 		err := m.Ack()
@@ -92,7 +92,8 @@ func (m *amqpMessage) Requeue(reason string) error {
 			return err
 		}
 
-		return m.dleChannel.Publish(m.retryExchangeName, m.delivery.RoutingKey, false, false, payload)
+
+		return m.retryChannel.Publish(m.retryExchangeName, m.delivery.RoutingKey, false, false, payload)
 	}
 
 	return m.delivery.Reject(true)
