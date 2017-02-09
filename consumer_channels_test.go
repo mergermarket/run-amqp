@@ -22,37 +22,71 @@ func TestMainChannelConfiguration(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+	t.Run("main exchange with queues with no routing key pattern", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
 
-	//connManager := &stubbedConnecionManager{
-	//	channel:stubChannel,
-	//}
+		testLogger := helpers.NewTestLogger(t)
+		consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, noPatterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+		consumerChannels := newConsumerChannels(consumerConfig)
 
-	testLogger := helpers.NewTestLogger(t)
-	consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, noPatterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
-	consumerChannels := newConsumerChannels(consumerConfig)
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.Name,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil, ).Return(nil)
 
-	stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.Name,
-		string(consumerConfig.exchange.Type),
-		true,
-		false,
-		false,
-		false,
-		nil, ).Return(nil)
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
+			true,                                                // durable
+			false,                                               // delete when usused
+			false,                                               // exclusive
+			false,                                               // no-wait
+			nil).Return(amqp.Queue{}, nil)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, "#", consumerConfig.exchange.Name, false, nil).Return(nil)
 
-	stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
-		true,                                                // durable
-		false,                                               // delete when usused
-		false,                                               // exclusive
-		false,                                               // no-wait
-		nil).Return(amqp.Queue{}, nil)
-	//
-	stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, "#", consumerConfig.exchange.Name, false, nil).Return(nil)
+		err := consumerChannels.setUpMainExchangeWithQueue(stubChannel)
 
-	err := consumerChannels.setUpMainExchangeWithQueue(stubChannel)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
 
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Run("main exchange and queues with multiple routing key patterns", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+
+		firstPattern :="test1.test.test"
+		secondPattern :="test2.test.test"
+		patterns := []string {firstPattern, secondPattern}
+
+		testLogger := helpers.NewTestLogger(t)
+		consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+		consumerChannels := newConsumerChannels(consumerConfig)
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.Name,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil, ).Return(nil)
+
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
+			true,                                                // durable
+			false,                                               // delete when usused
+			false,                                               // exclusive
+			false,                                               // no-wait
+			nil).Return(amqp.Queue{}, nil)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, firstPattern, consumerConfig.exchange.Name, false, nil).Return(nil)
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, secondPattern, consumerConfig.exchange.Name, false, nil).Return(nil)
+
+		err := consumerChannels.setUpMainExchangeWithQueue(stubChannel)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
 
 }
