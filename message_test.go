@@ -1,12 +1,12 @@
 package runamqp
 
 import (
+	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
 	"testing"
 	"time"
-	"fmt"
 )
 
 type stubbedAcknowledger struct {
