@@ -26,6 +26,12 @@ gometalinter \
 
 go fmt $(go list ./... | grep -v /vendor/)
 
+if [ ! -d coverage ]; then
+    mkdir coverage
+fi
+chmod 777 coverage
+echo "mode: count" > coverage/coverage-all.out
+
  for pkg in $(go list ./... | grep -v /vendor/)
     do
       echo "pkg=$pkg"

@@ -19,17 +19,21 @@ Prerequisites:
 
 Run all tests:
 
-    docker-compose run runamqp
+    `docker-compose run runamqp`
 
 Run specific test:
 
-    docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries
+    `docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries`
+
+View coverage:
+
+    `go tool cover -html=coverage/coverage-all.out`
 
 ## Test Harness Application
 
 A test harness app exists in `/sample` so you can play around with it a bit:
 
-    docker-compose run --service-ports sampleapp
+    `docker-compose run --service-ports sampleapp`
 
 View the test harness app at `/entry`
 
