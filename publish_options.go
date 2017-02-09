@@ -15,4 +15,3 @@ type PublishOptions struct {
 func (p PublishOptions) String() string {
 	return fmt.Sprintf(`Priority: "%d" Publish to queue: "%s" Pattern "%s"`, p.Priority, p.PublishToQueue, p.Pattern)
 }
-

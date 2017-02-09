@@ -37,10 +37,10 @@ func newPublisherServer(publisher publisher, exchangeName string, logger logger)
 	p.router.HandleFunc("/entry", p.entry)
 	p.router.HandleFunc("/up", p.rabbitup)
 
-	entryForm, err := template.ParseFiles("entryForm.html")
+	entryForm, err := template.New("entry").Parse(entryForm)
 
 	if err != nil {
-		p.logger.Error("Problem parsing entryForm.html template", err)
+		p.logger.Error("Problem parsing entryForm template", err)
 	}
 
 	p.entryForm = entryForm

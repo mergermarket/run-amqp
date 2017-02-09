@@ -1,3 +1,6 @@
+package runamqp
+
+const entryForm = `
 <html>
 <head>
     <title>Helper form</title>
@@ -133,3 +136,4 @@
 
 </body>
 </html>
+`
