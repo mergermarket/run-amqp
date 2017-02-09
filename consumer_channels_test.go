@@ -90,3 +90,103 @@ func TestMainChannelConfiguration(t *testing.T) {
 	})
 
 }
+
+func TestDLEChannelConfiguration(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	testLogger := helpers.NewTestLogger(t)
+
+	firstPattern :="test1.test.test"
+	secondPattern :="test2.test.test"
+	patterns := []string {firstPattern, secondPattern}
+
+	consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+
+	t.Run("dle exchange with queues with no routing key pattern", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+
+		consumerChannels := newConsumerChannels(consumerConfig)
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.DLE,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil, ).Return(nil)
+
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.DLQ, // name
+			true,                                                // durable
+			false,                                               // delete when usused
+			false,                                               // exclusive
+			false,                                               // no-wait
+			nil).Return(amqp.Queue{}, nil)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.DLQ, "#", consumerConfig.exchange.DLE, false, nil).Return(nil)
+
+		err := consumerChannels.setUpDeadLetterExchangeWithQueue(stubChannel)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
+
+func TestRetryChannelConfiguration(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	testLogger := helpers.NewTestLogger(t)
+
+	firstPattern :="test1.test.test"
+	secondPattern :="test2.test.test"
+	patterns := []string {firstPattern, secondPattern}
+
+	consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+
+	t.Run("dle exchange with queues with no routing key pattern", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+
+		consumerChannels := newConsumerChannels(consumerConfig)
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.RetryLater,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil, ).Return(nil)
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.RetryNow,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil, ).Return(nil)
+
+		args:= make(map[string]interface{})
+		args["x-dead-letter-exchange"] = consumerConfig.exchange.RetryNow
+		args["x-message-ttl"] = consumerConfig.queue.RequeueTTL
+		args["x-dead-letter-routing-key"] = "#"
+
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.RetryLater, // name
+			true,                                                // durable
+			false,                                               // delete when usused
+			false,                                               // exclusive
+			false,                                               // no-wait
+			args).Return(amqp.Queue{}, nil)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.RetryLater, "#", consumerConfig.exchange.RetryLater, false, nil).Return(nil)
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, "#", consumerConfig.exchange.RetryNow, false, nil).Return(nil)
+
+		err := consumerChannels.setUpRetryExchangeWithQueue(stubChannel)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+}
