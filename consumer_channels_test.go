@@ -1,11 +1,11 @@
 package runamqp
 
 import (
-	"testing"
-	"github.com/mergermarket/run-amqp/connection"
 	"github.com/golang/mock/gomock"
+	"github.com/mergermarket/run-amqp/connection"
 	"github.com/mergermarket/run-amqp/helpers"
 	"github.com/streadway/amqp"
+	"testing"
 )
 
 type stubbedConnecionManager struct {
@@ -35,13 +35,13 @@ func TestMainChannelConfiguration(t *testing.T) {
 			false,
 			false,
 			false,
-			nil, ).Return(nil)
+			nil).Return(nil)
 
 		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
-			true,                                                // durable
-			false,                                               // delete when usused
-			false,                                               // exclusive
-			false,                                               // no-wait
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
 			nil).Return(amqp.Queue{}, nil)
 		//
 		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, "#", consumerConfig.exchange.Name, false, nil).Return(nil)
@@ -56,9 +56,9 @@ func TestMainChannelConfiguration(t *testing.T) {
 	t.Run("main exchange and queues with multiple routing key patterns", func(t *testing.T) {
 		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
 
-		firstPattern :="test1.test.test"
-		secondPattern :="test2.test.test"
-		patterns := []string {firstPattern, secondPattern}
+		firstPattern := "test1.test.test"
+		secondPattern := "test2.test.test"
+		patterns := []string{firstPattern, secondPattern}
 
 		testLogger := helpers.NewTestLogger(t)
 		consumerConfig := NewConsumerConfig("url", testExchangeName, Topic, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
@@ -70,13 +70,13 @@ func TestMainChannelConfiguration(t *testing.T) {
 			false,
 			false,
 			false,
-			nil, ).Return(nil)
+			nil).Return(nil)
 
 		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
-			true,                                                // durable
-			false,                                               // delete when usused
-			false,                                               // exclusive
-			false,                                               // no-wait
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
 			nil).Return(amqp.Queue{}, nil)
 		//
 		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, firstPattern, consumerConfig.exchange.Name, false, nil).Return(nil)
@@ -97,9 +97,9 @@ func TestDLEChannelConfiguration(t *testing.T) {
 
 	testLogger := helpers.NewTestLogger(t)
 
-	firstPattern :="test1.test.test"
-	secondPattern :="test2.test.test"
-	patterns := []string {firstPattern, secondPattern}
+	firstPattern := "test1.test.test"
+	secondPattern := "test2.test.test"
+	patterns := []string{firstPattern, secondPattern}
 
 	consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
 
@@ -114,13 +114,13 @@ func TestDLEChannelConfiguration(t *testing.T) {
 			false,
 			false,
 			false,
-			nil, ).Return(nil)
+			nil).Return(nil)
 
 		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.DLQ, // name
-			true,                                                // durable
-			false,                                               // delete when usused
-			false,                                               // exclusive
-			false,                                               // no-wait
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
 			nil).Return(amqp.Queue{}, nil)
 		//
 		stubChannel.EXPECT().QueueBind(consumerConfig.queue.DLQ, "#", consumerConfig.exchange.DLE, false, nil).Return(nil)
@@ -140,9 +140,9 @@ func TestRetryChannelConfiguration(t *testing.T) {
 
 	testLogger := helpers.NewTestLogger(t)
 
-	firstPattern :="test1.test.test"
-	secondPattern :="test2.test.test"
-	patterns := []string {firstPattern, secondPattern}
+	firstPattern := "test1.test.test"
+	secondPattern := "test2.test.test"
+	patterns := []string{firstPattern, secondPattern}
 
 	consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, patterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
 
@@ -157,7 +157,7 @@ func TestRetryChannelConfiguration(t *testing.T) {
 			false,
 			false,
 			false,
-			nil, ).Return(nil)
+			nil).Return(nil)
 
 		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.RetryNow,
 			string(consumerConfig.exchange.Type),
@@ -165,18 +165,18 @@ func TestRetryChannelConfiguration(t *testing.T) {
 			false,
 			false,
 			false,
-			nil, ).Return(nil)
+			nil).Return(nil)
 
-		args:= make(map[string]interface{})
+		args := make(map[string]interface{})
 		args["x-dead-letter-exchange"] = consumerConfig.exchange.RetryNow
 		args["x-message-ttl"] = consumerConfig.queue.RequeueTTL
 		args["x-dead-letter-routing-key"] = "#"
 
 		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.RetryLater, // name
-			true,                                                // durable
-			false,                                               // delete when usused
-			false,                                               // exclusive
-			false,                                               // no-wait
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
 			args).Return(amqp.Queue{}, nil)
 		//
 		stubChannel.EXPECT().QueueBind(consumerConfig.queue.RetryLater, "#", consumerConfig.exchange.RetryLater, false, nil).Return(nil)

@@ -25,4 +25,12 @@ gometalinter \
 	--deadline=20s
 
 go fmt $(go list ./... | grep -v /vendor/)
-go test $(go list ./... | grep -v acceptance-tests ) --cover -timeout 10s
+
+ for pkg in $(go list ./... | grep -v /vendor/)
+    do
+      echo "pkg=$pkg"
+      go test -coverprofile=coverage/coverage.out -covermode=count $pkg
+      if [ -f coverage/coverage.out ]; then
+        tail -n +2 coverage/coverage.out >> coverage/coverage-all.out
+      fi
+    done

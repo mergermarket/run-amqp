@@ -1,3 +1,4 @@
 .idea/
 .idea/workspace.xml
 run-amqp.iml
+*.out
