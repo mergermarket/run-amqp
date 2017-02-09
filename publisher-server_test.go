@@ -31,7 +31,7 @@ func (s *stubPublisher) Publish(message []byte, options *PublishOptions) error {
 	return s.err
 }
 
-const testExchangeName = "experts exchange"
+const testExchangeName = "experts_exchange_name"
 
 func TestPublisherServer_ServeHTTP(t *testing.T) {
 	logger := helpers.NewTestLogger(t)

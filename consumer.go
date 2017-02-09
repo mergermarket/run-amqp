@@ -95,7 +95,7 @@ func (c *Consumer) consumeQueue() error {
 }
 
 func assertAndBindQueue(ch connection.AMQPChannel, queueName, exchangeName string, patterns []string, arguments map[string]interface{}) error {
-	q, err := ch.QueueDeclare(
+	_, err := ch.QueueDeclare(
 		queueName, // name
 		true,      // durable
 		false,     // delete when usused
@@ -109,7 +109,7 @@ func assertAndBindQueue(ch connection.AMQPChannel, queueName, exchangeName strin
 	}
 
 	for _, pattern := range patterns {
-		if err := ch.QueueBind(q.Name, pattern, exchangeName, false, nil); err != nil {
+		if err := ch.QueueBind(queueName, pattern, exchangeName, false, nil); err != nil {
 			return err
 		}
 	}

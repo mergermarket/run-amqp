@@ -52,6 +52,8 @@ func makeExchange(ch connection.AMQPChannel, exchangeName string, exchangeType E
 		return fmt.Errorf("Unrecognised exchange type, check config")
 	}
 
+	fmt.Println("xxx", exchangeName, exchangeType)
+
 	return ch.ExchangeDeclare(
 		exchangeName,
 		string(exchangeType),
