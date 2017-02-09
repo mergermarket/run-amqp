@@ -169,6 +169,41 @@ func TestDLEChannelConfiguration(t *testing.T) {
 		}
 	})
 
+	t.Run("dle exchange with queues with no routing key pattern", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+
+		consumerChannels := newConsumerChannels(consumerConfig)
+
+		exchangeErr := errors.New("Oh no")
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.DLE,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil).Return(exchangeErr)
+
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.DLQ, // name
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
+			nil).Return(amqp.Queue{}, nil).Times(0)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.DLQ, "#", consumerConfig.exchange.DLE, false, nil).Return(nil).Times(0)
+
+		err := consumerChannels.setUpDeadLetterExchangeWithQueue(stubChannel)
+
+		if err == nil {
+			t.Fatal("Expected an error returned because declaring DLE exchange fails")
+		}
+
+		if err != exchangeErr {
+			t.Error("Did not get expected error", exchangeErr, err)
+		}
+	})
+
 }
 
 func TestRetryChannelConfiguration(t *testing.T) {
