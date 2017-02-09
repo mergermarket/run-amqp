@@ -15,13 +15,29 @@ func TestReturnsUnrecognisedTypeAndErrorWhenExchangeIsWrong(t *testing.T) {
 }
 
 func TestItsCaseInsensitiveWhenCheckingExchangeTypes(t *testing.T) {
-	typ, err := NewExchangeType("fANout")
 
-	if err != nil {
-		t.Fatal("Unexpected error", err)
+	tests := []struct {
+		input    string
+		expected ExchangeType
+	}{
+		{input: "fanOUT", expected: Fanout},
+		{input: "fanout", expected: Fanout},
+		{input: "topic", expected: Topic},
+		{input: "toPic", expected: Topic},
+		{input: "direct", expected: Direct},
+		{input: "Direct", expected: Direct},
 	}
 
-	if typ != Fanout {
-		t.Error("Unexpected type, expected Fanout but got", typ)
+	for _, tst := range tests {
+		typ, err := NewExchangeType(tst.input)
+
+		if err != nil {
+			t.Fatal("Unexpected error", err)
+		}
+
+		if typ != tst.expected {
+			t.Error("Unexpected type, expected Fanout but got", typ)
+		}
 	}
+
 }
