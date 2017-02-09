@@ -22,16 +22,12 @@ func newConsumerChannels(config ConsumerConfig) *consumerChannels {
 }
 
 func (c *consumerChannels) openChannels(connectionManager connection.ConnectionManager) (ready bool) {
-	mainQueueReady := make(chan bool)
-	dleQueueReady := make(chan bool)
-	retryQueueReady := make(chan bool)
 
-	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.setUpMainExchangeWithQueue, c.config.queue.Name)
-	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.setUpDeadLetterExchangeWithQueue, c.config.queue.DLQ)
-	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.setUpRetryExchangeWithQueue, c.config.queue.RetryLater)
+	mainQueueReady := c.isExchangeWithQueueReady(connectionManager, c.setUpMainExchangeWithQueue, c.config.queue.Name)
+	dleQueueReady := c.isExchangeWithQueueReady(connectionManager, c.setUpDeadLetterExchangeWithQueue, c.config.queue.DLQ)
+	retryQueueReady := c.isExchangeWithQueueReady(connectionManager, c.setUpRetryExchangeWithQueue, c.config.queue.RetryLater)
 
 	return allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
-
 }
 
 func (c *consumerChannels) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
@@ -123,7 +119,9 @@ func (c *consumerChannels) setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel
 	return nil
 }
 
-func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error, description string) {
+func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, setUpExchangeWithQueue func(*amqp.Channel) error, description string) chan bool {
+
+	isReady := make(chan bool)
 
 	go func() {
 		for channel := range connectionManager.OpenChannel(description) {
@@ -134,6 +132,8 @@ func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection
 			isReady <- err == nil
 		}
 	}()
+
+	return isReady
 
 }
 
