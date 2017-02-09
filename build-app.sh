@@ -34,7 +34,6 @@ echo "mode: count" > coverage/coverage-all.out
 
  for pkg in $(go list ./... | grep -v /vendor/)
     do
-      echo "pkg=$pkg"
       go test -coverprofile=coverage/coverage.out -covermode=count $pkg
       if [ -f coverage/coverage.out ]; then
         tail -n +2 coverage/coverage.out >> coverage/coverage-all.out
