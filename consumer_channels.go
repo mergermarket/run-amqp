@@ -2,7 +2,9 @@ package runamqp
 
 import (
 	"fmt"
+	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
+	"sync"
 )
 
 type consumerChannels struct {
@@ -17,6 +19,19 @@ func newConsumerChannels(config ConsumerConfig) *consumerChannels {
 	return &consumerChannels{
 		config: config,
 	}
+}
+
+func (c *consumerChannels) openChannels(connectionManager connection.ConnectionManager) (ready bool) {
+	mainQueueReady := make(chan bool)
+	dleQueueReady := make(chan bool)
+	retryQueueReady := make(chan bool)
+
+	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.setUpMainExchangeWithQueue, c.config.queue.Name)
+	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.setUpDeadLetterExchangeWithQueue, c.config.queue.DLQ)
+	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.setUpRetryExchangeWithQueue, c.config.queue.RetryLater)
+
+	return allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
+
 }
 
 func (c *consumerChannels) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
@@ -106,4 +121,38 @@ func (c *consumerChannels) setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel
 	c.config.Logger.Info("Created the bindings for queue ", c.config.queue.Name, "to exchange", retryNowExchangeName, "with type", c.config.exchange.Type, "and with routing keys", retryNowPatterns)
 
 	return nil
+}
+
+func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error, description string) {
+
+	go func() {
+		for channel := range connectionManager.OpenChannel(description) {
+			err := setUpExchangeWithQueue(channel)
+			if err != nil {
+				c.config.Logger.Error(err)
+			}
+			isReady <- err == nil
+		}
+	}()
+
+}
+
+func allQueuesReady(signals ...<-chan bool) bool {
+	var wg sync.WaitGroup
+	isAnyUnSuccessful := false
+	wg.Add(len(signals))
+
+	for _, s := range signals {
+		go func(signal <-chan bool) {
+			defer wg.Done()
+			if success := <-signal; !success {
+				isAnyUnSuccessful = true
+			}
+		}(s)
+	}
+
+	wg.Wait()
+
+	return !isAnyUnSuccessful
+
 }

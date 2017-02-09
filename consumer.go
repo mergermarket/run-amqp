@@ -3,7 +3,6 @@ package runamqp
 import (
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
-	"sync"
 )
 
 // Consumer has a channel for receiving messages
@@ -47,17 +46,7 @@ func (c *Consumer) setUpConnection() {
 
 	connectionManager := connection.NewConnectionManager(c.config.URL, c.config.Logger)
 
-	mainQueueReady := make(chan bool)
-	dleQueueReady := make(chan bool)
-	retryQueueReady := make(chan bool)
-
-	go c.isExchangeWithQueueReady(connectionManager, mainQueueReady, c.consumerChannels.setUpMainExchangeWithQueue, c.config.queue.Name)
-	go c.isExchangeWithQueueReady(connectionManager, dleQueueReady, c.consumerChannels.setUpDeadLetterExchangeWithQueue, c.config.queue.DLQ)
-	go c.isExchangeWithQueueReady(connectionManager, retryQueueReady, c.consumerChannels.setUpRetryExchangeWithQueue, c.config.queue.RetryLater)
-
-	isReady := allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
-
-	if !isReady {
+	if !c.consumerChannels.openChannels(connectionManager) {
 		c.QueuesBound <- false
 		return
 	}
@@ -70,40 +59,6 @@ func (c *Consumer) setUpConnection() {
 	}
 
 	c.QueuesBound <- true
-}
-
-func allQueuesReady(signals ...<-chan bool) bool {
-	var wg sync.WaitGroup
-	isAnyUnSuccessful := false
-	wg.Add(len(signals))
-
-	for _, s := range signals {
-		go func(signal <-chan bool) {
-			defer wg.Done()
-			if success := <-signal; !success {
-				isAnyUnSuccessful = true
-			}
-		}(s)
-	}
-
-	wg.Wait()
-
-	return !isAnyUnSuccessful
-
-}
-
-func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, isReady chan bool, setUpExchangeWithQueue func(*amqp.Channel) error, description string) {
-
-	go func() {
-		for channel := range connectionManager.OpenChannel(description) {
-			err := setUpExchangeWithQueue(channel)
-			if err != nil {
-				c.config.Logger.Error(err)
-			}
-			isReady <- err == nil
-		}
-	}()
-
 }
 
 func (c *Consumer) consumeQueue() error {
