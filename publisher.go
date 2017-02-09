@@ -55,11 +55,11 @@ func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 
 	if pattern != "" {
 		message := fmt.Sprintf(`Published "%s" to exchange "%s" with options: %s`, string(msg), exchangeName, options)
-		p.config.Logger.Info(message)
+		p.config.Logger.Debug(message)
 
 	} else {
 		message := fmt.Sprintf(`Published "%s"`, string(msg))
-		p.config.Logger.Info(message)
+		p.config.Logger.Debug(message)
 	}
 
 	return nil
