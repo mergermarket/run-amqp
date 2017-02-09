@@ -2,6 +2,7 @@ package runamqp
 
 import (
 	"fmt"
+	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
 	"time"
 )
@@ -16,8 +17,8 @@ type Message interface {
 
 type amqpMessage struct {
 	delivery          amqp.Delivery
-	dleChannel        *amqp.Channel
-	retryChannel      *amqp.Channel
+	dleChannel        connection.AMQPChannel
+	retryChannel      connection.AMQPChannel
 	retryLimit        int
 	retryExchangeName string
 	dleExchangeName   string

@@ -2,7 +2,6 @@ package runamqp
 
 import (
 	"github.com/mergermarket/run-amqp/connection"
-	"github.com/streadway/amqp"
 )
 
 // Consumer has a channel for receiving messages
@@ -95,7 +94,7 @@ func (c *Consumer) consumeQueue() error {
 	return nil
 }
 
-func assertAndBindQueue(ch *amqp.Channel, queueName, exchangeName string, patterns []string, arguments map[string]interface{}) error {
+func assertAndBindQueue(ch connection.AMQPChannel, queueName, exchangeName string, patterns []string, arguments map[string]interface{}) error {
 	q, err := ch.QueueDeclare(
 		queueName, // name
 		true,      // durable

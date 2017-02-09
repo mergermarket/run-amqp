@@ -7,12 +7,12 @@ import (
 
 type channelConnection interface {
 	OpenChannel(connection *amqp.Connection)
-	NewChannel() chan *amqp.Channel
+	NewChannel() chan AMQPChannel
 	sendError(*amqp.Error)
 }
 
 type cConnection struct {
-	channels           chan *amqp.Channel
+	channels           chan AMQPChannel
 	connection         *amqp.Connection
 	openChannel        *amqp.Channel
 	errors             chan *amqp.Error
@@ -23,7 +23,7 @@ type cConnection struct {
 func newChannelConnection(logger logger, channelDescription string) channelConnection {
 	channel := cConnection{
 		logger:             logger,
-		channels:           make(chan *amqp.Channel),
+		channels:           make(chan AMQPChannel),
 		channelDescription: channelDescription,
 		errors:             make(chan *amqp.Error),
 	}
@@ -36,7 +36,7 @@ func (c *cConnection) OpenChannel(connection *amqp.Connection) {
 	go c.create()
 }
 
-func (c *cConnection) NewChannel() chan *amqp.Channel {
+func (c *cConnection) NewChannel() chan AMQPChannel {
 	return c.channels
 }
 

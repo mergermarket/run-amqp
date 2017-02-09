@@ -2,7 +2,7 @@ package runamqp
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
+	"github.com/mergermarket/run-amqp/connection"
 	"strings"
 )
 
@@ -46,7 +46,7 @@ const (
 	nowait     = false
 )
 
-func makeExchange(ch *amqp.Channel, exchangeName string, exchangeType ExchangeType) error {
+func makeExchange(ch connection.AMQPChannel, exchangeName string, exchangeType ExchangeType) error {
 
 	if exchangeType == Unrecognised {
 		return fmt.Errorf("Unrecognised exchange type, check config")

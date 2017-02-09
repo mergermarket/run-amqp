@@ -12,7 +12,7 @@ import (
 type Publisher struct {
 	PublishReady chan bool
 
-	currentAmqpChannel *amqp.Channel
+	currentAmqpChannel connection.AMQPChannel
 	config             PublisherConfig
 	router             *publisherServer
 	publishReady       bool

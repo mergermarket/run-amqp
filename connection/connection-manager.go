@@ -12,7 +12,7 @@ type logger interface {
 }
 
 type ConnectionManager interface {
-	OpenChannel(description string) chan *amqp.Channel
+	OpenChannel(description string) chan AMQPChannel
 	sendConnectionError(err *amqp.Error)
 	sendChannelError(index uint8, err *amqp.Error) error
 }
@@ -40,7 +40,7 @@ func NewConnectionManager(URL string, logger logger) ConnectionManager {
 	return &newManager
 }
 
-func (m *manager) OpenChannel(description string) chan *amqp.Channel {
+func (m *manager) OpenChannel(description string) chan AMQPChannel {
 
 	channelConnection := newChannelConnection(m.logger, description)
 	m.channelConnections = append(m.channelConnections, channelConnection)

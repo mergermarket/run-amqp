@@ -3,14 +3,13 @@ package runamqp
 import (
 	"fmt"
 	"github.com/mergermarket/run-amqp/connection"
-	"github.com/streadway/amqp"
 	"sync"
 )
 
 type consumerChannels struct {
-	mainChannel  *amqp.Channel
-	dleChannel   *amqp.Channel
-	retryChannel *amqp.Channel
+	mainChannel  connection.AMQPChannel
+	dleChannel   connection.AMQPChannel
+	retryChannel connection.AMQPChannel
 
 	config ConsumerConfig
 }
@@ -30,7 +29,7 @@ func (c *consumerChannels) openChannels(connectionManager connection.ConnectionM
 	return allQueuesReady(mainQueueReady, dleQueueReady, retryQueueReady)
 }
 
-func (c *consumerChannels) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
+func (c *consumerChannels) setUpMainExchangeWithQueue(amqpChannel connection.AMQPChannel) error {
 
 	c.mainChannel = amqpChannel
 
@@ -47,7 +46,7 @@ func (c *consumerChannels) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel)
 	return err
 }
 
-func (c *consumerChannels) setUpDeadLetterExchangeWithQueue(amqpChannel *amqp.Channel) error {
+func (c *consumerChannels) setUpDeadLetterExchangeWithQueue(amqpChannel connection.AMQPChannel) error {
 
 	c.dleChannel = amqpChannel
 
@@ -67,7 +66,7 @@ func (c *consumerChannels) setUpDeadLetterExchangeWithQueue(amqpChannel *amqp.Ch
 
 const matchAllPattern = "#"
 
-func (c *consumerChannels) setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel) error {
+func (c *consumerChannels) setUpRetryExchangeWithQueue(amqpChannel connection.AMQPChannel) error {
 
 	c.retryChannel = amqpChannel
 
@@ -119,7 +118,7 @@ func (c *consumerChannels) setUpRetryExchangeWithQueue(amqpChannel *amqp.Channel
 	return nil
 }
 
-func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, setUpExchangeWithQueue func(*amqp.Channel) error, description string) chan bool {
+func (c *consumerChannels) isExchangeWithQueueReady(connectionManager connection.ConnectionManager, setUpExchangeWithQueue func(connection.AMQPChannel) error, description string) chan bool {
 
 	isReady := make(chan bool)
 
