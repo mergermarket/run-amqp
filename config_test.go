@@ -101,3 +101,15 @@ func TestItSetsPatternsOnQueue(t *testing.T) {
 		t.Error("Unexpected pattern, expected", pattern, "but got", consumerConfig.queue.Patterns[0])
 	}
 }
+
+func TestExchange_String(t *testing.T) {
+	ex := exchange{
+		Name: "bob",
+		Type: Fanout,
+	}
+
+	expected := "name bob, type fanout"
+	if ex.String() != expected {
+		t.Error("Expected", expected, "but got", ex.String())
+	}
+}

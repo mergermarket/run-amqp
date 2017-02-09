@@ -23,8 +23,10 @@ type exchange struct {
 	Type       ExchangeType
 }
 
+const exchangeStringFormat = "name %s, type %s"
+
 func (e exchange) String() string {
-	return fmt.Sprintf("name %s, type %s", e.Name, e.Type)
+	return fmt.Sprintf(exchangeStringFormat, e.Name, e.Type)
 }
 
 type queue struct {
