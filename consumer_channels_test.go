@@ -1,6 +1,7 @@
 package runamqp
 
 import (
+	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/mergermarket/run-amqp/helpers"
@@ -89,6 +90,42 @@ func TestMainChannelConfiguration(t *testing.T) {
 		}
 	})
 
+	t.Run("returns error and doesnt try to bind queue if exchange fails", func(t *testing.T) {
+		stubChannel := connection.NewMockAMQPChannel(mockCtrl)
+
+		testLogger := helpers.NewTestLogger(t)
+		consumerConfig := NewConsumerConfig("url", testExchangeName, Fanout, noPatterns, testLogger, testRequeueTTL, testRequeueLimit, serviceName)
+		consumerChannels := newConsumerChannels(consumerConfig)
+
+		exchangeErr := errors.New("oh no")
+
+		stubChannel.EXPECT().ExchangeDeclare(consumerConfig.exchange.Name,
+			string(consumerConfig.exchange.Type),
+			true,
+			false,
+			false,
+			false,
+			nil).Return(exchangeErr)
+
+		stubChannel.EXPECT().QueueDeclare(consumerConfig.queue.Name, // name
+			true,  // durable
+			false, // delete when usused
+			false, // exclusive
+			false, // no-wait
+			nil).Return(amqp.Queue{}, nil).Times(0)
+		//
+		stubChannel.EXPECT().QueueBind(consumerConfig.queue.Name, "#", consumerConfig.exchange.Name, false, nil).Return(nil).Times(0)
+
+		err := consumerChannels.setUpMainExchangeWithQueue(stubChannel)
+
+		if err == nil {
+			t.Fatal("Expect an error to be returned")
+		}
+
+		if err != exchangeErr {
+			t.Fatal("Error returned was not what we expected", err, exchangeErr)
+		}
+	})
 }
 
 func TestDLEChannelConfiguration(t *testing.T) {
