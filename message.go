@@ -63,8 +63,8 @@ func (m *amqpMessage) Requeue(reason string) error {
 		retryCount := 1
 		if headerRetryCount, found := m.delivery.Headers["x-retry-count"]; found {
 
-			if temp, ok := headerRetryCount.(int); ok {
-				retryCount = temp + 1
+			if temp, ok := headerRetryCount.(int64); ok {
+				retryCount = int(temp) + 1
 			} else {
 				retryCount++
 			}
