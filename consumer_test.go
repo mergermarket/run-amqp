@@ -113,11 +113,11 @@ func TestDLQ(t *testing.T) {
 func TestRequeue(t *testing.T) {
 	t.Parallel()
 
-	const twoRetries = 2
+	const totalRetries = 3
 	patterns := []string{"*.notifications.bounced", "*.notifications.dropped"}
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		Patterns: patterns,
-		Retries:  twoRetries,
+		Retries:  totalRetries,
 	})
 
 	consumer := NewConsumer(consumerConfig)
@@ -138,27 +138,35 @@ func TestRequeue(t *testing.T) {
 		t.Fatal("Did not get the published message")
 	}
 
-	if err := publishedMessage.Requeue("Requeuing the first message"); err != nil {
-		t.Fatal("Could not REQUEUE the message")
-	}
+	for retryCount := 1; retryCount <= totalRetries; retryCount++ {
 
-	requeuedMessage := getMessage(t, consumer.Messages)
+		if err := publishedMessage.Requeue("Requeuing the message"); err != nil {
+			t.Fatal("Could not REQUEUE the message")
+		}
 
-	if requeuedMessage == nil {
-		t.Fatal("Did not get the requeued message")
-	}
+		publishedMessage = getMessage(t, consumer.Messages)
 
-	actualMessage := string(requeuedMessage.Body())
-	expectedMessage := string(payload)
+		if publishedMessage == nil {
+			t.Fatal("Did not get the requeued message")
+		}
 
-	if actualMessage != expectedMessage {
-		t.Fatalf("Failed to get the requeued message: %s but got %s", expectedMessage, actualMessage)
-	}
+		actualMessage := string(publishedMessage.Body())
+		expectedMessage := string(payload)
 
-	amqpMsg, _ := requeuedMessage.(*amqpMessage)
+		if actualMessage != expectedMessage {
+			t.Fatalf("Failed to get the requeued message: %s but got %s", expectedMessage, actualMessage)
+		}
 
-	if _, found := amqpMsg.delivery.Headers["x-retry-count"]; !found {
-		t.Fatal("x-retry-count was not set correctly")
+		amqpMsg, _ := publishedMessage.(*amqpMessage)
+
+		count, found := amqpMsg.delivery.Headers["x-retry-count"]
+		if !found {
+			t.Fatal("x-retry-count was not set correctly")
+		}
+
+		if count.(int64) != int64(retryCount) {
+			t.Error("First retry count should be", retryCount, "but its", count)
+		}
 	}
 
 }
