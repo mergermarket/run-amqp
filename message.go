@@ -66,7 +66,7 @@ func (m *amqpMessage) Requeue(reason string) error {
 			if temp, ok := headerRetryCount.(int64); ok {
 				retryCount = int(temp) + 1
 			} else {
-				retryCount++
+				return fmt.Errorf("The message %+v retry count could not be parsed correctly, this is probably a bug in run-amqp", m)
 			}
 
 		}
