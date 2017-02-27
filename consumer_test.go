@@ -113,11 +113,11 @@ func TestDLQ(t *testing.T) {
 func TestRequeue(t *testing.T) {
 	t.Parallel()
 
-	const twoRetries = 2
+	const threeRetries = 3
 	patterns := []string{"*.notifications.bounced", "*.notifications.dropped"}
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		Patterns: patterns,
-		Retries:  twoRetries,
+		Retries:  threeRetries,
 	})
 
 	consumer := NewConsumer(consumerConfig)
@@ -157,10 +157,48 @@ func TestRequeue(t *testing.T) {
 
 	amqpMsg, _ := requeuedMessage.(*amqpMessage)
 
-	if _, found := amqpMsg.delivery.Headers["x-retry-count"]; !found {
+	count, found := amqpMsg.delivery.Headers["x-retry-count"]
+	if !found {
 		t.Fatal("x-retry-count was not set correctly")
 	}
 
+	if count.(int64) != 1 {
+		t.Error("First retry count should be 1 but its", count)
+	}
+
+	if err := requeuedMessage.Requeue("Requeuing message again"); err != nil {
+		t.Fatal("Could not requeue the message again")
+	}
+
+	secondRequeuedMsg := getMessage(t, consumer.Messages)
+	amqpMsg, _ = secondRequeuedMsg.(*amqpMessage)
+
+	count, found = amqpMsg.delivery.Headers["x-retry-count"]
+
+	if !found {
+		t.Fatal("x-retry-count was not set correctly")
+	}
+
+	if count.(int64) != 2 {
+		t.Error("Retry count should be now 2 but its", count)
+	}
+
+	if err := secondRequeuedMsg.Requeue("Requeuing message again"); err != nil {
+		t.Fatal("Could not requeue the message again")
+	}
+
+	thirdRequeuedMsg := getMessage(t, consumer.Messages)
+	amqpMsg, _ = thirdRequeuedMsg.(*amqpMessage)
+
+	count, found = amqpMsg.delivery.Headers["x-retry-count"]
+
+	if !found {
+		t.Fatal("x-retry-count was not set correctly")
+	}
+
+	if count.(int64) != 3 {
+		t.Error("Retry count should be now 3 but its", count)
+	}
 }
 
 func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
