@@ -39,7 +39,8 @@ type queue struct {
 // PublisherConfig is used to create a connectionConfig to an exchange for publishing messages to
 type PublisherConfig struct {
 	connectionConfig
-	exchange exchange
+	exchange    exchange
+	confirmable bool
 }
 
 // ConsumerConfig is used to create a connectionConfig to an exchange with a corresponding queue to listen to messages on
@@ -51,13 +52,14 @@ type ConsumerConfig struct {
 
 // NewPublisherConfig returns a PublisherConfig derived from the consumer config. This config can be used to create a Publisher to Publish to this consumer
 func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
-	return NewPublisherConfig(c.URL, c.exchange.Name, c.exchange.Type, c.Logger)
+	return NewPublisherConfig(c.URL, c.exchange.Name, c.exchange.Type, false, c.Logger)
 }
 
 // NewPublisherConfig config for establishing a RabbitMq Publisher
-func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, logger logger) PublisherConfig {
+func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeType, confirmable bool, logger logger) PublisherConfig {
 
 	return PublisherConfig{
+		confirmable: confirmable,
 		connectionConfig: connectionConfig{
 			URL:    URL,
 			Logger: logger,

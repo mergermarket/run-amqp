@@ -88,13 +88,39 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (p *Publisher) listenForOpenedAMQPChannel() {
 	connectionManager := connection.NewConnectionManager(p.config.URL, p.config.Logger)
 	for ch := range connectionManager.OpenChannel(p.config.exchange.Name) {
-		p.currentAmqpChannel = ch
-		p.listenForReturnedMessages()
-		p.publishReady = true
-		p.PublishReady <- true
-		p.config.Logger.Info("Ready to publish")
+		setupCurrentChannel(p, ch)
 	}
 }
+func setupCurrentChannel(p *Publisher, ch connection.AMQPChannel) {
+	p.currentAmqpChannel = ch
+	p.listenForReturnedMessages()
+	if p.config.confirmable {
+
+		p.setupConfirmChannel()
+	}
+	p.publishReady = true
+	p.PublishReady <- true
+	p.config.Logger.Info("Ready to publish")
+}
+
+func (p *Publisher) setupConfirmChannel() {
+	err := p.currentAmqpChannel.Confirm(false)
+	if err != nil {
+		p.config.Logger.Error(fmt.Sprintf(`failed to set up the channel for "%s" as confirm channel: %v`, p.config.exchange.Name, err))
+		return
+	}
+
+	go func() {
+		confirm := make(chan amqp.Confirmation)
+		confirm = p.currentAmqpChannel.NotifyPublish(confirm)
+
+		for res := range confirm {
+			msg := fmt.Sprintf(`received a confirmation for a message that was published: "%+v" `, res)
+			p.config.Logger.Debug(msg)
+		}
+	}()
+}
+
 func (p *Publisher) listenForReturnedMessages() {
 	if p.currentAmqpChannel != nil {
 		returnMessage := make(chan amqp.Return)
