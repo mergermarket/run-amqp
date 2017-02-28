@@ -104,9 +104,7 @@ func setupCurrentChannel(p *Publisher, ch connection.AMQPChannel) {
 }
 
 func (p *Publisher) setupConfirmChannel() {
-	p.config.Logger.Debug("i am here now")
 	err := p.currentAmqpChannel.Confirm(false)
-	p.config.Logger.Debug("hi =======================================", err)
 	if err != nil {
 		p.config.Logger.Error(fmt.Sprintf(`failed to set up the channel for "%s" as confirm channel: %v`, p.config.exchange.Name, err))
 		return
