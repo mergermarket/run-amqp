@@ -64,6 +64,53 @@ func TestConsumerConsumesMessages(t *testing.T) {
 	}
 }
 
+func TestPublishAndConsumeFromConfirmChannelMessages(t *testing.T) {
+	t.Parallel()
+
+	consumer1Config := newTestConsumerConfig(t, consumerConfigOptions{})
+	consumer2Config := newTestConsumerConfig(t, consumerConfigOptions{
+		ExchangeName: consumer1Config.exchange.Name,
+		ServiceName:  consumer1Config.queue.Name + "-second",
+	})
+
+	config := consumer1Config.NewPublisherConfig()
+	config.confirmable = true
+
+	publisher := NewPublisher(config)
+
+	assertReady(t, publisher.PublishReady)
+
+	consumer1 := NewConsumer(consumer1Config)
+	assertReady(t, consumer1.QueuesBound)
+
+	consumer2 := NewConsumer(consumer2Config)
+	assertReady(t, consumer2.QueuesBound)
+
+	err := publisher.Publish(payload, nil)
+	if err != nil {
+		t.Fatal("Error when Publishing the message")
+	}
+
+	message := getMessage(t, consumer1.Messages)
+	if string(message.Body()) != string(payload) {
+		t.Fatal("failed to publish - consumer1")
+	}
+	err = message.Ack()
+	if err != nil {
+		t.Fatal("Error when Acking the message - consumer1")
+	}
+	t.Log("First consumer - done")
+
+	message = getMessage(t, consumer2.Messages)
+	if string(message.Body()) != string(payload) {
+		t.Fatal("failed to publish - consumer2")
+	}
+	err = message.Ack()
+	if err != nil {
+		t.Fatal("Error when Acking the message - consumer2")
+	}
+}
+
 func TestDLQ(t *testing.T) {
 	t.Parallel()
 

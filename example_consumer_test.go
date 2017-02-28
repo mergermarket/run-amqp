@@ -54,7 +54,7 @@ func ExampleConsumer() {
 	consumer.Process(handler, numberOfWorkers)
 
 	// We can now publish to the same exchange for fun
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, config.Logger)
+	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, false, config.Logger)
 	publisher := NewPublisher(publisherConfig)
 
 	// Let's check the Publisher is ready too
