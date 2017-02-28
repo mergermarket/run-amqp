@@ -91,7 +91,8 @@ func (p *Publisher) listenForOpenedAMQPChannel() {
 		setupCurrentChannel(p, ch)
 	}
 }
-func setupCurrentChannel(p *Publisher, ch connection.AMQPChannel) {
+
+func setupCurrentChannel(p *Publisher, ch *amqp.Channel) {
 	p.currentAmqpChannel = ch
 	p.listenForReturnedMessages()
 	if p.config.confirmable {
