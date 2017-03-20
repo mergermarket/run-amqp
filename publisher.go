@@ -94,6 +94,7 @@ func (p *Publisher) listenForOpenedAMQPChannel() {
 
 func setupCurrentChannel(p *Publisher, ch *amqp.Channel) {
 	p.currentAmqpChannel = ch
+	makeExchange(ch, p.config.exchange.Name, p.config.exchange.Type)
 	p.listenForReturnedMessages()
 	if p.config.confirmable {
 
