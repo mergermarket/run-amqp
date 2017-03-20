@@ -94,10 +94,17 @@ func (p *Publisher) listenForOpenedAMQPChannel() {
 
 func setupCurrentChannel(p *Publisher, ch *amqp.Channel) {
 	p.currentAmqpChannel = ch
-	makeExchange(ch, p.config.exchange.Name, p.config.exchange.Type)
+	err := makeExchange(p.currentAmqpChannel, p.config.exchange.Name, p.config.exchange.Type)
+
+	if err != nil {
+		p.config.Logger.Error(fmt.Sprintf(`failed to create the exchange "%s" with error "%+v"`, p.config.exchange.Name, err))
+		p.publishReady = false
+		p.PublishReady <- false
+		return
+	}
+
 	p.listenForReturnedMessages()
 	if p.config.confirmable {
-
 		p.setupConfirmChannel()
 	}
 	p.publishReady = true
