@@ -79,22 +79,10 @@ func NewPublisher(config PublisherConfig) (*Publisher, error) {
 	p.config = config
 	p.router = newPublisherServer(p, config.exchange.Name, config.Logger)
 
-	rdy := make(chan bool)
-
 	go p.listenForOpenedAMQPChannel()
 
-	go func() {
-		for {
-			time.Sleep(10 * time.Millisecond)
-			if p.IsReady() {
-				rdy <- true
-				return
-			}
-		}
-	}()
-
 	select {
-	case <-rdy:
+	case <-p.waitForReady():
 		return p, nil
 	case <-time.After(30 * time.Second):
 		return nil, fmt.Errorf("timed out waiting to create publisher %+v", config)
@@ -164,4 +152,18 @@ func (p *Publisher) listenForReturnedMessages() {
 		}()
 	}
 
+}
+
+func (p *Publisher) waitForReady() chan bool {
+	rdy := make(chan bool)
+	go func() {
+		for {
+			time.Sleep(10 * time.Millisecond)
+			if p.IsReady() {
+				rdy <- true
+				return
+			}
+		}
+	}()
+	return rdy
 }
