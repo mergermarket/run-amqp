@@ -43,20 +43,17 @@ func main() {
 
 	consumer.Process(handler, numberOfWorkers)
 
-	publisher := runamqp.NewPublisher(consumerConfig.NewPublisherConfig())
+	publisher, err := runamqp.NewPublisher(consumerConfig.NewPublisherConfig())
 
-	select {
-	case <-publisher.PublishReady:
-		log.Println("Publisher ready")
-	case <-time.After(10 * time.Second):
-		log.Fatal("Timed out waiting to set up rabbit")
+	if err != nil {
+		log.Fatal("Problem making publisher", err)
 	}
 
 	publisher.Publish([]byte("This is the publisher being used to... publish"), nil)
 
 	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange or GET /up to see if rabbit is ready")
 
-	err := http.ListenAndServe(":8080", publisher)
+	err = http.ListenAndServe(":8080", publisher)
 
 	if err != nil {
 		log.Fatal(err)

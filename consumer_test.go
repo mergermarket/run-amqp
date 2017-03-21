@@ -30,8 +30,7 @@ func TestConsumerConsumesMessages(t *testing.T) {
 		ServiceName:  consumer1Config.queue.Name + "-second",
 	})
 
-	publisher := NewPublisher(consumer1Config.NewPublisherConfig())
-	assertReady(t, publisher.PublishReady)
+	publisher, _ := NewPublisher(consumer1Config.NewPublisherConfig())
 
 	consumer1 := NewConsumer(consumer1Config)
 	assertReady(t, consumer1.QueuesBound)
@@ -76,9 +75,8 @@ func TestPublishAndConsumeFromConfirmChannelMessages(t *testing.T) {
 	config := consumer1Config.NewPublisherConfig()
 	config.confirmable = true
 
-	publisher := NewPublisher(config)
-
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(config)
+	assertNoError(t, err)
 
 	consumer1 := NewConsumer(consumer1Config)
 	assertReady(t, consumer1.QueuesBound)
@@ -86,7 +84,7 @@ func TestPublishAndConsumeFromConfirmChannelMessages(t *testing.T) {
 	consumer2 := NewConsumer(consumer2Config)
 	assertReady(t, consumer2.QueuesBound)
 
-	err := publisher.Publish(payload, nil)
+	err = publisher.Publish(payload, nil)
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
@@ -119,9 +117,8 @@ func TestDLQ(t *testing.T) {
 
 	assertReady(t, consumer.QueuesBound)
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	dlqConfig := newTestConsumerConfig(t, consumerConfigOptions{
 		ExchangeName: consumerConfig.exchange.DLE,
@@ -171,9 +168,8 @@ func TestRequeue(t *testing.T) {
 
 	assertReady(t, consumer.QueuesBound)
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	if err := publisher.Publish(payload, &PublishOptions{Pattern: "all.notifications.bounced"}); err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -239,9 +235,8 @@ func TestRequeue_DLQ_Message_After_Retries(t *testing.T) {
 
 	assertReady(t, dlqConsumer.QueuesBound)
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	if err := publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -304,9 +299,8 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 
 	assertReady(t, consumer.QueuesBound)
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	if err := publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -339,8 +333,8 @@ func TestPatterns(t *testing.T) {
 	consumer := NewConsumer(consumerConfig)
 	assertReady(t, consumer.QueuesBound)
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	gotMessageForPattern := func(msg, pattern string) bool {
 
@@ -379,8 +373,8 @@ func TestPublishToASpecificQueue(t *testing.T) {
 
 	consumerConfig := newTestConsumerConfig(t, consumerConfigOptions{})
 
-	publisher := NewPublisher(consumerConfig.NewPublisherConfig())
-	assertReady(t, publisher.PublishReady)
+	publisher, err := NewPublisher(consumerConfig.NewPublisherConfig())
+	assertNoError(t, err)
 
 	consumer := NewConsumer(consumerConfig)
 	assertReady(t, consumer.QueuesBound)
@@ -392,7 +386,7 @@ func TestPublishToASpecificQueue(t *testing.T) {
 	consumerForTarget := NewConsumer(consumerConfigForTargettedQueue)
 	assertReady(t, consumerForTarget.QueuesBound)
 
-	err := publisher.Publish(payload, &PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
+	err = publisher.Publish(payload, &PublishOptions{PublishToQueue: consumerConfigForTargettedQueue.queue.Name})
 
 	if err != nil {
 		t.Fatal("Error when Publishing the message")
@@ -504,5 +498,11 @@ func shouldNotGetMessage(t *testing.T, ch <-chan Message) {
 		t.Fatal("Should not have received the message")
 	case <-time.After(1 * time.Second):
 		t.Log("Mesage was not received")
+	}
+}
+
+func assertNoError(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
 	}
 }

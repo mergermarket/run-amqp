@@ -6,12 +6,11 @@ import (
 
 	"github.com/mergermarket/run-amqp/connection"
 	"github.com/streadway/amqp"
+	"time"
 )
 
 // Publisher provides a means of publishing to an exchange and is a http handler providing endpoints of GET /rabbitup, POST /entry
 type Publisher struct {
-	PublishReady chan bool
-
 	currentAmqpChannel *amqp.Channel
 	config             PublisherConfig
 	router             *publisherServer
@@ -71,14 +70,32 @@ func (p *Publisher) IsReady() bool {
 }
 
 // NewPublisher returns a function to send messages to the exchange defined in your config. This will create a managed connection to rabbit, so you should only create this once in your application.
-func NewPublisher(config PublisherConfig) *Publisher {
+func NewPublisher(config PublisherConfig) (*Publisher, error) {
 	p := new(Publisher)
 	p.config = config
-	p.PublishReady = make(chan bool)
 	p.router = newPublisherServer(p, config.exchange.Name, config.Logger)
 
+	rdy := make(chan bool)
+
 	go p.listenForOpenedAMQPChannel()
-	return p
+
+	go func() {
+		for {
+			time.Sleep(10 * time.Millisecond)
+			if p.IsReady() {
+				rdy <- true
+				return
+			}
+		}
+	}()
+
+	select {
+	case <-rdy:
+		return p, nil
+	case <-time.After(30 * time.Second):
+		return nil, fmt.Errorf("timed out waiting to create publisher %+v", config)
+	}
+
 }
 
 func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -94,12 +111,12 @@ func (p *Publisher) listenForOpenedAMQPChannel() {
 
 func setupCurrentChannel(p *Publisher, ch *amqp.Channel) {
 	p.currentAmqpChannel = ch
+
 	err := makeExchange(p.currentAmqpChannel, p.config.exchange.Name, p.config.exchange.Type)
 
 	if err != nil {
 		p.config.Logger.Error(fmt.Sprintf(`failed to create the exchange "%s" with error "%+v"`, p.config.exchange.Name, err))
 		p.publishReady = false
-		p.PublishReady <- false
 		return
 	}
 
@@ -108,7 +125,6 @@ func setupCurrentChannel(p *Publisher, ch *amqp.Channel) {
 		p.setupConfirmChannel()
 	}
 	p.publishReady = true
-	p.PublishReady <- true
 	p.config.Logger.Info("Ready to publish")
 }
 
