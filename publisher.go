@@ -20,6 +20,10 @@ type Publisher struct {
 // Publish will publish a message to an exchange
 func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 
+	if !p.publishReady {
+		return fmt.Errorf("unable to publish %s, not ready to publish, try later", string(msg))
+	}
+
 	exchangeName := p.config.exchange.Name
 
 	var pattern string
@@ -105,6 +109,7 @@ func (p *Publisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (p *Publisher) listenForOpenedAMQPChannel() {
 	connectionManager := connection.NewConnectionManager(p.config.URL, p.config.Logger)
 	for ch := range connectionManager.OpenChannel(p.config.exchange.Name) {
+		p.publishReady = false
 		setupCurrentChannel(p, ch)
 	}
 }
