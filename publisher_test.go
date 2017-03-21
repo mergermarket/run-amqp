@@ -3,7 +3,6 @@ package runamqp
 import (
 	"github.com/mergermarket/run-amqp/helpers"
 	"testing"
-	"time"
 )
 
 func TestNakedPublisher(t *testing.T) {
@@ -25,6 +24,4 @@ func TestNakedPublisher(t *testing.T) {
 	if err != nil {
 		t.Error("Should not get an error")
 	}
-
-	time.Sleep(5 * time.Second)
 }
