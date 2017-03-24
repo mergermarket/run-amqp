@@ -103,6 +103,10 @@ func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.Connect
 
 	go func() {
 		for channel := range connectionManager.OpenChannel(description) {
+			if err := channel.Qos(1, 0, true); err != nil {
+				c.config.Logger.Error(fmt.Sprintf("problem setting quality of service when consuming %v", err))
+			}
+
 			err := setUpExchangeWithQueue(channel)
 			if err != nil {
 				c.config.Logger.Error(err)
