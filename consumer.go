@@ -129,7 +129,10 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 		return err
 	}
 
-	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, nil)
+	args := make(map[string]interface{})
+	args["x-max-priority"] = c.config.queue.MaxPriority
+
+	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, args)
 
 	return err
 }

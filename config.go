@@ -28,12 +28,13 @@ func (e exchange) String() string {
 }
 
 type queue struct {
-	Name       string
-	DLQ        string
-	RetryLater string
-	RequeueTTL int16
-	RetryLimit int
-	Patterns   []string
+	Name        string
+	DLQ         string
+	RetryLater  string
+	RequeueTTL  int16
+	RetryLimit  int
+	Patterns    []string
+	MaxPriority uint8
 }
 
 // PublisherConfig is used to create a connectionConfig to an exchange for publishing messages to
@@ -94,12 +95,13 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 			Type:       exchangeType,
 		},
 		queue: queue{
-			Name:       queueName,
-			DLQ:        queueName + "-dlq",
-			RetryLater: fmt.Sprintf("%s-retry-%dms-later", queueName, requeueTTL),
-			RequeueTTL: requeueTTL,
-			RetryLimit: requeueLimit,
-			Patterns:   patterns,
+			Name:        queueName,
+			DLQ:         queueName + "-dlq",
+			RetryLater:  fmt.Sprintf("%s-retry-%dms-later", queueName, requeueTTL),
+			RequeueTTL:  requeueTTL,
+			RetryLimit:  requeueLimit,
+			Patterns:    patterns,
+			MaxPriority: 10,
 		},
 	}
 }
