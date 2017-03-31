@@ -134,6 +134,20 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
 	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, args)
 
+	if err != nil {
+		return err
+	}
+
+	prefetchCount := c.config.queue.PrefetchCount
+
+	if prefetchCount == 0 {
+		prefetchCount = 10
+	}
+
+	prefetchSize := prefetchCount * 3
+
+	err = amqpChannel.Qos(prefetchCount, prefetchSize, false)
+
 	return err
 }
 
