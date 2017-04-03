@@ -103,10 +103,6 @@ func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.Connect
 
 	go func() {
 		for channel := range connectionManager.OpenChannel(description) {
-			if err := channel.Qos(1, 0, true); err != nil {
-				c.config.Logger.Error(fmt.Sprintf("problem setting quality of service when consuming %v", err))
-			}
-
 			err := setUpExchangeWithQueue(channel)
 			if err != nil {
 				c.config.Logger.Error(err)
@@ -140,13 +136,10 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 
 	prefetchCount := c.config.queue.PrefetchCount
 
-	if prefetchCount == 0 {
-		prefetchCount = 10
+	if err := amqpChannel.Qos(prefetchCount, 0, false); err != nil {
+		c.config.Logger.Error(fmt.Sprintf("problem setting quality of service when consuming %v", err))
+		return err
 	}
-
-	prefetchSize := prefetchCount * 3
-
-	err = amqpChannel.Qos(prefetchCount, prefetchSize, false)
 
 	return err
 }
