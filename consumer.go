@@ -103,10 +103,6 @@ func (c *Consumer) isExchangeWithQueueReady(connectionManager connection.Connect
 
 	go func() {
 		for channel := range connectionManager.OpenChannel(description) {
-			if err := channel.Qos(1, 0, true); err != nil {
-				c.config.Logger.Error(fmt.Sprintf("problem setting quality of service when consuming %v", err))
-			}
-
 			err := setUpExchangeWithQueue(channel)
 			if err != nil {
 				c.config.Logger.Error(err)
@@ -133,6 +129,17 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 	args["x-max-priority"] = c.config.queue.MaxPriority
 
 	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, args)
+
+	if err != nil {
+		return err
+	}
+
+	prefetchCount := c.config.queue.PrefetchCount
+
+	if err := amqpChannel.Qos(prefetchCount, 0, false); err != nil {
+		c.config.Logger.Error(fmt.Sprintf("problem setting quality of service when consuming %v", err))
+		return err
+	}
 
 	return err
 }
