@@ -74,7 +74,7 @@ func NewPublisherConfig(URL string, exchangeName string, exchangeType ExchangeTy
 }
 
 // NewConsumerConfig config for establishing a RabbitMq consumer
-func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeType, patterns []string, logger logger, requeueTTL int16, requeueLimit int, serviceName string) ConsumerConfig {
+func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeType, patterns []string, logger logger, requeueTTL int16, requeueLimit int, serviceName string, prefetch int) ConsumerConfig {
 
 	if len(patterns) == 0 {
 		logger.Info("Executive decision made! You did not supply a pattern so we have added a default of '#'")
@@ -103,7 +103,7 @@ func NewConsumerConfig(URL string, exchangeName string, exchangeType ExchangeTyp
 			RetryLimit:    requeueLimit,
 			Patterns:      patterns,
 			MaxPriority:   10,
-			PrefetchCount: 10,
+			PrefetchCount: prefetch,
 		},
 	}
 }

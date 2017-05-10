@@ -467,6 +467,7 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.RequeueTTL,
 		config.Retries,
 		config.ServiceName,
+		defaultPrefetch,
 	)
 }
 
