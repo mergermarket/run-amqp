@@ -5,6 +5,8 @@ import (
 	"testing"
 )
 
+const defaultPrefetch = 10
+
 func TestItDerivesConsumerExchanges(t *testing.T) {
 
 	logger := helpers.NewTestLogger(t)
@@ -18,6 +20,7 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 		200,
 		testRequeueLimit,
 		"service",
+		defaultPrefetch,
 	)
 
 	expectedQueueName := "producer-stuff-for-service"
@@ -54,6 +57,10 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 	if consumerConfig.queue.RetryLater != expectedRetryLaterQueueName {
 		t.Error("Expected", expectedRetryLaterQueueName, "but got", consumerConfig.queue.RetryLater)
 	}
+
+	if consumerConfig.queue.PrefetchCount != defaultPrefetch {
+		t.Error("Expected prefetch of", defaultPrefetch, "but got", consumerConfig.queue.PrefetchCount)
+	}
 }
 
 func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
@@ -68,6 +75,7 @@ func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 		200,
 		testRequeueLimit,
 		"service",
+		defaultPrefetch,
 	)
 
 	if len(consumerConfig.queue.Patterns) != 1 {
@@ -91,6 +99,7 @@ func TestItSetsPatternsOnQueue(t *testing.T) {
 		200,
 		testRequeueLimit,
 		"service",
+		defaultPrefetch,
 	)
 
 	if len(consumerConfig.queue.Patterns) != 1 {

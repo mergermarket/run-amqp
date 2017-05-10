@@ -34,6 +34,7 @@ func ExampleConsumer() {
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,
+		defaultPrefetch,
 	)
 
 	// Create a consumer, which holds the references to the channel of Messages

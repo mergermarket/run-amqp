@@ -14,6 +14,7 @@ const requeueTTL = 500
 const requeueLimit = 5
 const serviceName = "sample-app"
 const amqpURL = "amqp://guest:guest@rabbitmq:5672/"
+const prefetch = 13
 
 var noPatterns = []string{""}
 
@@ -28,6 +29,7 @@ func main() {
 		requeueTTL,
 		requeueLimit,
 		serviceName,
+		prefetch,
 	)
 
 	consumer := runamqp.NewConsumer(consumerConfig)
