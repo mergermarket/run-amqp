@@ -44,6 +44,7 @@ func (m *amqpMessage) Nack(reason string) error {
 
 	headers := make(map[string]interface{})
 	headers["x-dle-reason"] = reason
+	headers["x-dle-timestamp"] = time.Now().Format(time.RFC3339)
 
 	payload := amqp.Publishing{
 		Body:      m.Body(),
