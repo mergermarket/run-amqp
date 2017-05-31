@@ -22,7 +22,7 @@ gometalinter \
 	--disable=gas \
 	--cyclo-over=20 \
 	--tests \
-	--deadline=20s
+	--deadline=80s
 
 go fmt $(go list ./... | grep -v /vendor/)
 go test $(go list ./... | grep -v acceptance-tests ) --cover -timeout 10s
