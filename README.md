@@ -27,11 +27,11 @@ Run specific test:
 
 ## Test Harness Application
 
-A test harness app exists in `/sample` so you can play around with it a bit:
+A test harness app exists in `/sample/` so you can play around with it a bit:
 
     docker-compose run --service-ports sampleapp
 
-View the test harness app at `/entry`
+View the test harness app at `<URL>/entry`
 
     http://localhost:8080/entry
 
