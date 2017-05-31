@@ -128,7 +128,7 @@ func TestDLQ(t *testing.T) {
 
 	assertReady(t, dlqConsumer.QueuesBound)
 
-	if err := publisher.Publish(payload, nil); err != nil {
+	if err = publisher.Publish(payload, nil); err != nil {
 		t.Fatal("Error when Publishing the message")
 	}
 
@@ -136,7 +136,7 @@ func TestDLQ(t *testing.T) {
 
 	rejectReason := "chris is poo"
 
-	if err := message.Nack(rejectReason); err != nil {
+	if err = message.Nack(rejectReason); err != nil {
 		t.Fatal("Error when Nacking the message")
 	}
 
@@ -150,6 +150,15 @@ func TestDLQ(t *testing.T) {
 
 	if dlqMessageAMQP.delivery.Headers["x-dle-reason"] != rejectReason {
 		t.Fatal("x-dle-reason was not set correctly")
+	}
+
+	timestamp, err := time.Parse(time.RFC3339, dlqMessageAMQP.delivery.Headers["x-dle-timestamp"].(string))
+	if err != nil {
+		t.Fatalf("x-dle-timestamp cannot be parsed: %v", err)
+	}
+	difference := time.Since(timestamp)
+	if difference > time.Duration(2*time.Second) {
+		t.Fatalf("x-dle-timestamp was not set correctly - difference: %s, timestamp: %s, now: %s", difference, timestamp, time.Now())
 	}
 
 }
