@@ -111,7 +111,7 @@ const entryForm = `
 </head>
 <body>
 <div class="form-style-5">
-    <form method="post" action="/entry">
+    <form method="post" action="">
         <fieldset>
             <legend><span class="number">1</span> Message</legend>
             <textarea rows="10" name="message" placeholder='Your message to publish to "{{.ExchangeName}}" exchange'></textarea>
