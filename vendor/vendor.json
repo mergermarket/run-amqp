@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "qik08F9+tO3aD/VsiPY19IbmT7k=",
+			"checksumSHA1": "T3MxQOn0MmHJ2bxjBzSvGMEjJ/U=",
 			"path": "github.com/streadway/amqp",
-			"revision": "63795daa9a446c920826655f26ba31c81c860fd6",
-			"revisionTime": "2016-12-24T08:20:40Z"
+			"revision": "27859d32540aebd2e5befa52dc59ae8e6a0132b6",
+			"revisionTime": "2017-06-11T16:03:33Z"
 		},
 		{
 			"checksumSHA1": "8fD/im5Kwvy3JgmxulDTambmE8w=",

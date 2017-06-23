@@ -1,12 +1,13 @@
+[![Build Status](https://api.travis-ci.org/streadway/amqp.svg)](http://travis-ci.org/streadway/amqp) [![GoDoc](https://godoc.org/github.com/streadway/amqp?status.svg)](http://godoc.org/github.com/streadway/amqp)
+
 # Go RabbitMQ Client Library
 
 This is an AMQP 0.9.1 client with RabbitMQ extensions in Go.
 
 ## Project Maturity
 
-This project has been used in production systems for over 3 years. It is reasonably mature
-and feature complete, and as of November 2016 has [a team of maintainers](https://github.com/streadway/amqp/issues/215)
-instead of being a one man show.
+This project has been used in production systems for many years. It is reasonably mature
+and feature complete, and as of November 2016 has [a team of maintainers](https://github.com/streadway/amqp/issues/215).
 
 Future API changes are unlikely but possible. They will be discussed on [Github
 issues](https://github.com/streadway/amqp/issues) along with any bugs or
@@ -31,11 +32,11 @@ Things not intended to be supported.
   * Auto reconnect and re-synchronization of client and server topologies.
     * Reconnection would require understanding the error paths when the
       topology cannot be declared on reconnect.  This would require a new set
-      of types and code paths that are best suited at the calledWith-site of this
+      of types and code paths that are best suited at the call-site of this
       package.  AMQP has a dynamic topology that needs all peers to agree. If
       this doesn't happen, the behavior is undefined.  Instead of producing a
       possible interface with undefined behavior, this package is designed to
-      be simple for the caller to implement the necessary connectionConfig-time
+      be simple for the caller to implement the necessary connection-time
       topology declaration so that reconnection is trivial and encapsulated in
       the caller's application code.
   * AMQP Protocol negotiation for forward or backward compatibility.
@@ -62,10 +63,6 @@ reference and usage.
 [RabbitMQ tutorials in
 Go](https://github.com/rabbitmq/rabbitmq-tutorials/tree/master/go) are also
 available.
-
-## Continuous Integration
-
-[![Build Status](https://secure.travis-ci.org/streadway/amqp.png)](http://travis-ci.org/streadway/amqp)
 
 ## Contributing
 
