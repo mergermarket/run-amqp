@@ -46,8 +46,9 @@ func (p *Publisher) Publish(msg []byte, options *PublishOptions) error {
 		true,
 		false,
 		amqp.Publishing{
-			Body:     msg,
-			Priority: priority,
+			Body:         msg,
+			Priority:     priority,
+			DeliveryMode: amqp.Persistent,
 		},
 	)
 
