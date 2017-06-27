@@ -50,13 +50,15 @@ func (c *sConnection) sendError(err *amqp.Error) {
 	c.errors <- err
 }
 
+const takeHeartbeatFromServer = 900 * time.Millisecond // less than 1s uses the server's interval
+
 func (c *sConnection) connect() {
 	attempts := 0
 	for {
 		c.logger.Info("Connecting to", c.URL)
 		attempts++
 		openConnection, err := amqp.DialConfig(c.URL, amqp.Config{
-			Heartbeat: 30 * time.Second,
+			Heartbeat: takeHeartbeatFromServer,
 		})
 
 		if err != nil {
