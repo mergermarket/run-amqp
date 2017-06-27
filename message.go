@@ -47,9 +47,10 @@ func (m *amqpMessage) Nack(reason string) error {
 	headers["x-dle-timestamp"] = time.Now().Format(time.RFC3339)
 
 	payload := amqp.Publishing{
-		Body:      m.Body(),
-		Headers:   headers,
-		Timestamp: time.Now(),
+		Body:         m.Body(),
+		Headers:      headers,
+		Timestamp:    time.Now(),
+		DeliveryMode: amqp.Persistent,
 	}
 
 	err = m.dleChannel.Publish(m.dleExchangeName, m.delivery.RoutingKey, false, false, payload)
@@ -80,9 +81,10 @@ func (m *amqpMessage) Requeue(reason string) error {
 		headers["x-retry-count"] = int64(retryCount)
 
 		payload := amqp.Publishing{
-			Body:      m.Body(),
-			Headers:   headers,
-			Timestamp: time.Now(),
+			Body:         m.Body(),
+			Headers:      headers,
+			Timestamp:    time.Now(),
+			DeliveryMode: amqp.Persistent,
 		}
 
 		err := m.Ack()
