@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -93,11 +94,10 @@ func (c *sConnection) listenForConnectionError() {
 		for {
 			err, ok := <-c.errors
 			if err != nil && ok {
-				c.logger.Error(fmt.Sprintf("there was sConnection error with Code: %d Reason: %s - will try to re-connect now.", err.Code, err.Reason))
+				c.logger.Error(fmt.Sprintf(`there was a connection error with Code: "%d" Reason: "%s" - will try to re-connect now.`, err.Code, err.Reason))
 				c.closeOpenConnection()
 				c.connect()
 			}
-
 		}
 	}()
 }
@@ -110,8 +110,7 @@ func (c *sConnection) listenForConnectionBlocked() {
 
 		for {
 			if blocking, ok := <-c.blockings; ok {
-				message := fmt.Sprintf("sConnection blocking received with TCP %t ready, with reason: %s", blocking.Active, blocking.Reason)
-				c.logger.Info(message)
+				c.logger.Info(fmt.Sprintf("connection blocking received with TCP %t ready, with reason: %s", blocking.Active, blocking.Reason))
 				c.isConnectionBlocked <- blocking.Active
 			}
 		}
@@ -119,9 +118,13 @@ func (c *sConnection) listenForConnectionBlocked() {
 }
 
 func (c *sConnection) closeOpenConnection() {
-	err := c.openConnection.Close()
 
+	err := c.openConnection.Close()
 	if err != nil {
-		c.logger.Error("failed to close the sConnection", err)
+		if strings.Contains(err.Error(), "channel/connection is not open") {
+			c.logger.Info("could not close connection because it's no longer open", err)
+		} else {
+			c.logger.Error("failed to close the connection", err)
+		}
 	}
 }
