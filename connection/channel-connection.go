@@ -46,7 +46,7 @@ func (c *cConnection) sendError(err *amqp.Error) {
 }
 
 func (c *cConnection) create() {
-	c.logger.Debug(fmt.Sprintf(`openning a new channel for "%s"`, c.channelDescription))
+	c.logger.Debug(fmt.Sprintf(`opening a new channel for "%s"`, c.channelDescription))
 
 	openChannel, err := c.connection.Channel()
 	if err != nil {
