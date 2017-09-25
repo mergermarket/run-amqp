@@ -3,6 +3,7 @@ package connection
 import (
 	"fmt"
 	"github.com/streadway/amqp"
+	"strings"
 )
 
 type channelConnection interface {
@@ -45,10 +46,9 @@ func (c *cConnection) sendError(err *amqp.Error) {
 }
 
 func (c *cConnection) create() {
-	c.logger.Debug(fmt.Sprintf(`openning a new channel for "%s"`, c.channelDescription))
+	c.logger.Debug(fmt.Sprintf(`opening a new channel for "%s"`, c.channelDescription))
 
 	openChannel, err := c.connection.Channel()
-
 	if err != nil {
 		c.logger.Error(fmt.Sprintf(`failed to open a new channel for "%s"`, c.channelDescription), err)
 		return
@@ -71,7 +71,7 @@ func (c *cConnection) listenForChannelError() {
 		for {
 			err, ok := <-c.errors
 			if err != nil && ok {
-				c.logger.Error(fmt.Sprintf(`something bad happend with channel opened for "%s" with error code : "%d" reason: "%s" - will try to re-open channel`, c.channelDescription, err.Code, err.Reason))
+				c.logger.Error(fmt.Sprintf(`there was a channel error on channel for "%s" with error code: "%d" reason: "%s" - will try to re-open channel now.`, c.channelDescription, err.Code, err.Reason))
 				c.closeOpenChannel()
 				c.create()
 			}
@@ -80,8 +80,11 @@ func (c *cConnection) listenForChannelError() {
 }
 func (c *cConnection) closeOpenChannel() {
 	err := c.openChannel.Close()
-
 	if err != nil {
-		c.logger.Error(fmt.Sprintf(`failed to close the channel opened for "%s"`, c.channelDescription), err)
+		if strings.Contains(err.Error(), "channel/connection is not open") {
+			c.logger.Info(fmt.Sprintf(`could not close channel for "%s" because it's no longer open`, c.channelDescription), err)
+		} else {
+			c.logger.Error(fmt.Sprintf(`failed to close the channel for "%s"`, c.channelDescription), err)
+		}
 	}
 }
