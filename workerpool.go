@@ -15,6 +15,11 @@ func startWorkers(work <-chan Message, handler MessageHandler, maxWorkers int, l
 				defer func() {
 					if r := recover(); r != nil {
 						logger.Error(fmt.Sprintf(`handler: "%s" paniced on message "%s", panic msg: "%v"`, handler.Name(), string(newMessage.Body()), r))
+						logger.Error(r)
+						err := newMessage.Nack(fmt.Sprintf(`handler "%s" paniced with panic message: "%+v"`, handler.Name(), r))
+						if err != nil {
+							logger.Error(err)
+						}
 					}
 				}()
 
