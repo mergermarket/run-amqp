@@ -32,12 +32,6 @@ type StubMessage interface {
 	RequeuedWith(expectedValue string) bool
 }
 
-// stubMessage should be used for your tests to stub out a message coming into your system.
-type stubMessage struct {
-	message string
-	calls   *stubMessageCalls
-}
-
 // stubMessageCalls records message calls such as Ack
 type stubMessageCalls struct {
 	ackCalled     bool
@@ -45,6 +39,12 @@ type stubMessageCalls struct {
 	nackReason    string
 	requeueCalled bool
 	requeueReason string
+}
+
+// stubMessage should be used for your tests to stub out a message coming into your system.
+type stubMessage struct {
+	message string
+	calls   *stubMessageCalls
 }
 
 // Body returns the message you passed into NewStubMessage

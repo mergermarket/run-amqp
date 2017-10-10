@@ -16,10 +16,10 @@ type connectionConfig struct {
 }
 
 type exchange struct {
+	DLE        string
 	Name       string
 	RetryNow   string
 	RetryLater string
-	DLE        string
 	Type       ExchangeType
 }
 
@@ -28,14 +28,14 @@ func (e exchange) String() string {
 }
 
 type queue struct {
-	Name          string
 	DLQ           string
+	MaxPriority   uint8
+	Name          string
+	Patterns      []string
+	PrefetchCount int
 	RetryLater    string
 	RequeueTTL    int16
 	RetryLimit    int
-	Patterns      []string
-	MaxPriority   uint8
-	PrefetchCount int
 }
 
 // PublisherConfig is used to create a connectionConfig to an exchange for publishing messages to
