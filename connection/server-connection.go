@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"math"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -51,27 +52,34 @@ func (c *sConnection) sendError(err *amqp.Error) {
 	c.errors <- err
 }
 
+// sanitiseURL will remove username and password from URL leaving only Host + Path
+func sanitiseURL(URL string) string {
+	parsedURL, _ := url.Parse(URL)
+	return parsedURL.Host + parsedURL.Path
+}
+
 const takeHeartbeatFromServer = 900 * time.Millisecond // less than 1s uses the server's interval
 
 func (c *sConnection) connect() {
+	safeURL := sanitiseURL(c.URL)
 	attempts := 0
 	for {
-		c.logger.Info("Connecting to", c.URL)
+		c.logger.Info("Connecting to", safeURL)
 		attempts++
 		openConnection, err := amqp.DialConfig(c.URL, amqp.Config{
 			Heartbeat: takeHeartbeatFromServer,
 		})
 
 		if err != nil {
-			c.logger.Error(fmt.Errorf("problem connecting to %s, %v", c.URL, err))
+			c.logger.Error(fmt.Errorf("problem connecting to %s, %v", safeURL, err))
 			millis := math.Exp2(float64(attempts))
 			sleepDuration := time.Duration(int(millis)) * time.Second
-			c.logger.Info("Trying to reconnect to RabbitMQ at", c.URL, "after", sleepDuration)
+			c.logger.Info("Trying to reconnect to RabbitMQ at", safeURL, "after", sleepDuration)
 			time.Sleep(sleepDuration)
 			continue
 		}
 
-		c.logger.Info("Connected to", c.URL)
+		c.logger.Info("Connected to", safeURL)
 
 		c.listenForConnectionError()
 		c.listenForConnectionBlocked()
