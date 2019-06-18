@@ -14,7 +14,6 @@ gometalinter \
     --vendor \
 	--exclude='error return value not checked.*(Close|Log|Print|fmt.Fprintln|fmt.Fprintf|fmt.Fprint).*$' \
 	--exclude='struct of size.*$' \
-	--exclude='Errors unhandled.*$' \
 	--exclude='.*_test\.go:.*error return value not checked.*\(errcheck\)$' \
 	--exclude='duplicate of.*_test.go.*\(dupl\)$' \
 	--disable=aligncheck \

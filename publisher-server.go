@@ -92,8 +92,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 
 		pattern = r.Form.Get("pattern")
 		body = []byte(r.Form.Get("message"))
-		priorityUint64, _ := strconv.ParseUint(r.Form.Get("priority"), 10, 8)
-		priority = uint8(priorityUint64)
+		priority = getMessagePriority(p, r.Form.Get("priority"))
 		publishToQueue = r.Form.Get("publishToQueue")
 
 	} else {
@@ -109,8 +108,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 
 		body = b
 		pattern = r.URL.Query().Get("pattern")
-		priorityUint64, _ := strconv.ParseUint(r.URL.Query().Get("priority"), 10, 8)
-		priority = uint8(priorityUint64)
+		priority = getMessagePriority(p, r.URL.Query().Get("priority"))
 		publishToQueue = r.URL.Query().Get("publishToQueue")
 	}
 
@@ -124,6 +122,15 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Written body to exchange %s", p.exchangeName)
+}
+
+func getMessagePriority(p *publisherServer, value string) uint8 {
+	priorityUint64, err := strconv.ParseUint(value, 10, 8)
+	if err != nil {
+		p.logger.Error(p.exchangeName, "Failed to get the priority for message")
+		priorityUint64 = 0
+	}
+	return uint8(priorityUint64)
 }
 
 func (p *publisherServer) rabbitup(w http.ResponseWriter, r *http.Request) {
