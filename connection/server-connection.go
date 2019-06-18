@@ -55,12 +55,11 @@ func (c *sConnection) sendError(err *amqp.Error) {
 // sanitiseURL will remove username and password from URL leaving only Host + Path
 func sanitiseURL(URL string) string {
 	parsedURL, _ := url.Parse(URL)
-	user := strings.Split(parsedURL.User.String(), ":")
-	if len(user) != 2 {
+	username := parsedURL.User.Username()
+	password, _ := parsedURL.User.Password()
+	if len(password) < 1 {
 		return URL
 	}
-	username := user[0]
-	password := user[1]
 	hiddenPassword := strings.Repeat("*", len(password))
 	return parsedURL.Scheme + "://" + username + ":" + hiddenPassword + "@" + parsedURL.Host + parsedURL.Path
 }
