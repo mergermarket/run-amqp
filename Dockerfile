@@ -1,4 +1,4 @@
-FROM golang:1.7
+FROM golang:1.12
 
 RUN go get -u github.com/alecthomas/gometalinter
 RUN go get -u github.com/kardianos/govendor

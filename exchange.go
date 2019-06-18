@@ -35,7 +35,7 @@ func NewExchangeType(typ string) (ExchangeType, error) {
 	case "direct":
 		return Direct, nil
 	default:
-		return Unrecognised, fmt.Errorf("Unrecognised exchange type %s", typ)
+		return Unrecognised, fmt.Errorf("unrecognised exchange type %s", typ)
 	}
 }
 
@@ -49,7 +49,7 @@ const (
 func makeExchange(ch *amqp.Channel, exchangeName string, exchangeType ExchangeType) error {
 
 	if exchangeType == Unrecognised {
-		return fmt.Errorf("Unrecognised exchange type, check config")
+		return fmt.Errorf("unrecognised exchange type, check config")
 	}
 
 	return ch.ExchangeDeclare(

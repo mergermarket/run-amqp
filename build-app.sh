@@ -12,7 +12,8 @@ fi
 
 gometalinter \
     --vendor \
-	--exclude='error return value not checked.*(Close|Log|Print).*\(errcheck\)$' \
+	--exclude='error return value not checked.*(Close|Log|Print|fmt.Fprintln|fmt.Fprintf|fmt.Fprint).*$' \
+	--exclude='struct of size.*$' \
 	--exclude='.*_test\.go:.*error return value not checked.*\(errcheck\)$' \
 	--exclude='duplicate of.*_test.go.*\(dupl\)$' \
 	--disable=aligncheck \
@@ -25,4 +26,4 @@ gometalinter \
 	--deadline=80s
 
 go fmt $(go list ./... | grep -v /vendor/)
-go test $(go list ./... | grep -v acceptance-tests ) --cover -timeout 10s
+go test $(go list ./... | grep -v acceptance-tests ) --cover -timeout 25s
