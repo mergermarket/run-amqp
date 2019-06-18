@@ -52,9 +52,12 @@ func (c *sConnection) sendError(err *amqp.Error) {
 	c.errors <- err
 }
 
-// sanitiseURL will remove username and password from URL leaving only Host + Path
-func sanitiseURL(URL string) string {
-	parsedURL, _ := url.Parse(URL)
+// maskPassword will remove username and password from URL leaving only Host + Path
+func maskPassword(URL string) string {
+	parsedURL, err := url.Parse(URL)
+	if err != nil || parsedURL.User == nil {
+		return URL
+	}
 	username := parsedURL.User.Username()
 	password, _ := parsedURL.User.Password()
 	if len(password) < 1 {
@@ -67,7 +70,7 @@ func sanitiseURL(URL string) string {
 const takeHeartbeatFromServer = 900 * time.Millisecond // less than 1s uses the server's interval
 
 func (c *sConnection) connect() {
-	safeURL := sanitiseURL(c.URL)
+	safeURL := maskPassword(c.URL)
 	attempts := 0
 	for {
 		c.logger.Info("Connecting to", safeURL)
