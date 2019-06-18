@@ -55,7 +55,7 @@ func (c *sConnection) sendError(err *amqp.Error) {
 // sanitiseURL will remove username and password from URL leaving only Host + Path
 func sanitiseURL(URL string) string {
 	parsedURL, _ := url.Parse(URL)
-	return parsedURL.Host + parsedURL.Path
+	return parsedURL.Scheme + "://" + parsedURL.Host + parsedURL.Path
 }
 
 const takeHeartbeatFromServer = 900 * time.Millisecond // less than 1s uses the server's interval
