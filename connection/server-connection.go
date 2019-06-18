@@ -52,7 +52,7 @@ func (c *sConnection) sendError(err *amqp.Error) {
 	c.errors <- err
 }
 
-// maskPassword will remove username and password from URL leaving only Host + Path
+// maskPassword will mask password included in URL with * characters
 func maskPassword(URL string) string {
 	parsedURL, err := url.Parse(URL)
 	if err != nil || parsedURL.User == nil {
