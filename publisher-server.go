@@ -127,7 +127,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 func getMessagePriority(p *publisherServer, value string) uint8 {
 	priorityUint64, err := strconv.ParseUint(value, 10, 8)
 	if err != nil {
-		p.logger.Error(p.exchangeName, "Failed to get the priority for message")
+		p.logger.Error(p.exchangeName, " Failed to get priority for message, defaulting to 0")
 		priorityUint64 = 0
 	}
 	return uint8(priorityUint64)
