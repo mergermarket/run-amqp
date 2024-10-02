@@ -2,7 +2,7 @@ package connection
 
 import (
 	"github.com/mergermarket/run-amqp/helpers"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"testing"
 	"time"
 )

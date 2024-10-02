@@ -2,7 +2,7 @@ package connection
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type logger interface {
@@ -11,11 +11,17 @@ type logger interface {
 	Debug(...interface{})
 }
 
+// Disable the linter because it complains about the name ConnectionManager, which I don't want to change right now
+//
+//revive:disable
 type ConnectionManager interface {
 	OpenChannel(description string) chan *amqp.Channel
 	sendConnectionError(err *amqp.Error)
 	sendChannelError(index uint8, err *amqp.Error) error
 }
+
+//revive:enable
+
 type manager struct {
 	openConnection     *amqp.Connection
 	connections        chan *amqp.Connection

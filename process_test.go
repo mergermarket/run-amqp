@@ -12,7 +12,7 @@ type alwaysAckingHandler struct {
 
 func (a *alwaysAckingHandler) Handle(msg Message) {
 	a.messageRecieved = string(msg.Body())
-	msg.Ack()
+	_ = msg.Ack()
 }
 
 func (a *alwaysAckingHandler) Name() string {

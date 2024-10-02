@@ -1,0 +1,29 @@
+
+services:
+  test:
+    build:
+      context: .
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  sampleapp:
+    build:
+      context: ./
+      dockerfile: ./sample/Dockerfile
+    ports:
+      - '8080:8080'
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
