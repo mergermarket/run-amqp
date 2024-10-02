@@ -25,7 +25,7 @@ func main() {
 		exchangeName,
 		runamqp.Fanout,
 		noPatterns,
-		&runamqp.SimpleLogger{os.Stdout},
+		&runamqp.SimpleLogger{Out: os.Stdout},
 		requeueTTL,
 		requeueLimit,
 		serviceName,
@@ -51,7 +51,10 @@ func main() {
 		log.Fatal("Problem making publisher", err)
 	}
 
-	publisher.Publish([]byte("This is the publisher being used to... publish"), nil)
+	err = publisher.Publish([]byte("This is the publisher being used to... publish"), nil)
+	if err != nil {
+		log.Fatal("Problem publishing", err)
+	}
 
 	log.Println("Listening on 8080, POST /entry {some body} to publish to the exchange or GET /up to see if rabbit is ready")
 
@@ -71,5 +74,9 @@ func (*SampleHandler) Name() string {
 
 func (*SampleHandler) Handle(msg runamqp.Message) {
 	log.Println("Sample handler got message", string(msg.Body()))
-	msg.Ack()
+	err := msg.Ack()
+	if err != nil {
+		log.Fatal("Problem handling got message", err)
+		return
+	}
 }

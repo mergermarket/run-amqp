@@ -2,24 +2,24 @@ package helpers
 
 import "testing"
 
-type testLogger struct {
+type TestLogger struct {
 	t *testing.T
 }
 
-func NewTestLogger(t *testing.T) *testLogger {
-	return &testLogger{
+func NewTestLogger(t *testing.T) *TestLogger {
+	return &TestLogger{
 		t: t,
 	}
 }
 
-func (t *testLogger) Info(items ...interface{}) {
+func (t *TestLogger) Info(items ...interface{}) {
 	t.t.Log("INFO", items)
 }
 
-func (t *testLogger) Error(items ...interface{}) {
+func (t *TestLogger) Error(items ...interface{}) {
 	t.t.Log("ERROR", items)
 }
 
-func (t *testLogger) Debug(items ...interface{}) {
+func (t *TestLogger) Debug(items ...interface{}) {
 	t.t.Log("DEBUG", items)
 }

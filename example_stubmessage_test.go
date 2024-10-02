@@ -13,19 +13,31 @@ func (e *ExampleHandlerToTest) Handle(msg Message) {
 	message := string(msg.Body())
 
 	if message == "AckMessage" {
-		msg.Ack()
+		err := msg.Ack()
+		if err != nil {
+			// Handle error
+			return
+		}
 		return
 	}
 
 	if message == "NackMessage" {
 		reasonForNach := "nackCalls demo!"
-		msg.Nack(reasonForNach)
+		err := msg.Nack(reasonForNach)
+		if err != nil {
+			// Handle error.
+			return
+		}
 		return
 	}
 
 	if message == "RequeueMessage" {
 		reasonForRequeue := "requeueCalls demo!"
-		msg.Requeue(reasonForRequeue)
+		err := msg.Requeue(reasonForRequeue)
+		if err != nil {
+			// Handle error.
+			return
+		}
 		return
 	}
 

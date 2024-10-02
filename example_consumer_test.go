@@ -2,7 +2,7 @@ package runamqp
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"time"
 )
@@ -15,7 +15,11 @@ type ExampleHandler struct {
 // Handle is how you implement the MessageHandler interface, what you do with it is up to you
 func (e *ExampleHandler) Handle(msg Message) {
 	e.calledWith = string(msg.Body())
-	msg.Ack()
+	err := msg.Ack()
+	if err != nil {
+		// Handle error.
+		return
+	}
 }
 
 func (e *ExampleHandler) Name() string {
@@ -30,7 +34,7 @@ func ExampleConsumer() {
 		"test-example-exchange",
 		Fanout,
 		noPatterns,
-		&SimpleLogger{ioutil.Discard},
+		&SimpleLogger{io.Discard},
 		testRequeueTTL,
 		testRequeueLimit,
 		serviceName,

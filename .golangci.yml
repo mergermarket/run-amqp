@@ -1,0 +1,26 @@
+linters:
+  enable:
+    - gosimple
+    - gofmt
+    - revive
+    - govet
+    - errcheck
+    - ineffassign
+    - staticcheck
+    - unused
+    - typecheck
+    - bodyclose
+
+  disable-all: true
+
+issues:
+  exclude-use-default: true
+  exclude:
+    #   This ignores errcheck fails about unchecked errs for things like `defer file.Close()`
+    - ((os\.)?std(out|err)\..*|.*Close|.*Flush|os\.Remove(All)?|.*printf?|os\.(Un)?Setenv)
+
+run:
+  timeout: 10m
+  go: "1.23"
+  modules-download-mode: readonly
+

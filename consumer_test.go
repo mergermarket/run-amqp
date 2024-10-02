@@ -17,10 +17,6 @@ const testRequeueTTL = 200
 const testRequeueLimit = 5
 const serviceName = "testservice"
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 func TestConsumerConsumesMessages(t *testing.T) {
 	t.Parallel()
 
@@ -324,7 +320,10 @@ func TestRequeue_With_No_Requeue_Limit(t *testing.T) {
 		if actualMessage != expectedMessage {
 			t.Fatalf("Failed to get the requeued message: %s but got %s", expectedMessage, actualMessage)
 		}
-		msg.Requeue(fmt.Sprintf("Requing it for the %d time.", counter))
+		err := msg.Requeue(fmt.Sprintf("Requing it for the %d time.", counter))
+		if err != nil {
+			t.Fatal("Failed to requeue message")
+		}
 	}
 
 	if counter != 10 {

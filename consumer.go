@@ -3,7 +3,7 @@ package runamqp
 import (
 	"fmt"
 	"github.com/mergermarket/run-amqp/connection"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"sync"
 )
 
@@ -21,7 +21,7 @@ type Consumer struct {
 	consumerChannels *consumerChannels
 }
 
-// MessageHandler is something that can process a Message, calling Ack, nackCalls when appropiate for your domain
+// MessageHandler is something that can process a Message, calling Ack, nackCalls when appropriate for your domain
 type MessageHandler interface {
 	// Name is a description of your handler for logging purposes
 	Name() string

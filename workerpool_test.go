@@ -53,7 +53,7 @@ func TestWorkerPoolPanicDoesntBreakEverything(t *testing.T) {
 type panicyHandler struct {
 }
 
-func (*panicyHandler) Handle(msg Message) {
+func (*panicyHandler) Handle(_ Message) {
 	panic("Oh nooooo")
 }
 
@@ -94,7 +94,7 @@ func (*testHandler) Name() string {
 	return "test worker"
 }
 
-func (w *testHandler) Handle(msg Message) {
+func (w *testHandler) Handle(_ Message) {
 	w.workerPoolCount.incr()
 	defer w.workerPoolCount.decr()
 

@@ -3,7 +3,7 @@ package runamqp
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -99,7 +99,7 @@ func (p *publisherServer) entry(w http.ResponseWriter, r *http.Request) {
 
 		defer r.Body.Close()
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,7 +133,7 @@ func getMessagePriority(p *publisherServer, value string) uint8 {
 	return uint8(priorityUint64)
 }
 
-func (p *publisherServer) rabbitup(w http.ResponseWriter, r *http.Request) {
+func (p *publisherServer) rabbitup(w http.ResponseWriter, _ *http.Request) {
 	p.logger.Debug(p.exchangeName, "Rabbit up hit")
 	if p.publisher.IsReady() {
 		w.WriteHeader(http.StatusOK)
