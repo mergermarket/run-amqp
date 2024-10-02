@@ -6,6 +6,5 @@ FROM golang:${GOLANG_VERSION} AS build
 ENV CGO_ENABLED=0
 
 WORKDIR /go/src/github.com/mergermarket/run-amqp
-ADD . /go/src/github.com/mergermarket/run-amqp
+ADD . .
 CMD go run sample/app.go
-EXPOSE 8080

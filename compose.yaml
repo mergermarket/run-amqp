@@ -8,7 +8,9 @@ services:
         condition: service_healthy
 
   sampleapp:
-    build: sample
+    build:
+      context: ./
+      dockerfile: ./sample/Dockerfile
     ports:
       - '8080:8080'
     depends_on:
