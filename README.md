@@ -19,17 +19,17 @@ Prerequisites:
 
 Run all tests:
 
-    docker-compose run runamqp
+    docker compose run runamqp
 
 Run specific test:
 
-    docker-compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries
+    docker compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries
 
 ## Test Harness Application
 
 A test harness app exists in `/sample/` so you can play around with it a bit:
 
-    docker-compose run --service-ports sampleapp
+    docker compose run --service-ports sampleapp
 
 View the test harness app at `<URL>/entry`
 
@@ -40,3 +40,15 @@ View the test harness app at `<URL>/entry`
 Read the [Godocs](https://godoc.org/github.com/mergermarket/run-amqp) for a comprehensive guide on how to implement RunAMQP.
 
 A good place to see RunAMQP used is in the test harness app mentioned above.
+
+## Contributing
+
+How to create a new version of this library:
+
+- Branch this git repository
+- Make your changes in the branch and run the tests.
+- Once the libraries tests pass, test the changes one of the services that use this library.
+  - Copy this library's branched directory inside that service's directory
+  - Use golang's module replace to use your local copy.`go mod edit -replace github.com/mergermarket/gotools=gotools`
+- Once you are satisfied that it works, commit, push, and tag main with the new version number
+- Update the services with the new version by running `go get -u; go mod tidy` in each service.
