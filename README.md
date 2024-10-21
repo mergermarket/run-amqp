@@ -19,11 +19,11 @@ Prerequisites:
 
 Run all tests:
 
-    docker compose run runamqp
+    docker compose run test
 
 Run specific test:
 
-    docker compose run runamqp go test -run=TestRequeue_DLQ_Message_After_Retries
+    docker compose run test go test -run=TestRequeue_DLQ_Message_After_Retries
 
 ## Test Harness Application
 

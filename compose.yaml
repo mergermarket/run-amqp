@@ -27,3 +27,10 @@ services:
       interval: 30s
       timeout: 30s
       retries: 3
+
+  lint:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.lint
+    command: |
+      golangci-lint run ./... --timeout=10m -v
