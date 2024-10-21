@@ -12,10 +12,10 @@ func TestNakedPublisher(t *testing.T) {
 	expectedExchangeName := "chris-rulz" + randomString(5)
 	c := NewPublisherConfig{
 		URL:          testRabbitURI,
-		exchangeName: expectedExchangeName,
-		exchangeType: Fanout,
-		confirmable:  true,
-		logger:       helpers.NewTestLogger(t),
+		ExchangeName: expectedExchangeName,
+		ExchangeType: Fanout,
+		Confirmable:  true,
+		Logger:       helpers.NewTestLogger(t),
 	}
 	config := c.Config()
 
@@ -38,10 +38,10 @@ func TestNotReadyPublisherErrorsOnPublish(t *testing.T) {
 	expectedExchangeName := "chris-rulz" + randomString(5)
 	c := NewPublisherConfig{
 		URL:          testRabbitURI,
-		exchangeName: expectedExchangeName,
-		exchangeType: Fanout,
-		confirmable:  true,
-		logger:       helpers.NewTestLogger(t),
+		ExchangeName: expectedExchangeName,
+		ExchangeType: Fanout,
+		Confirmable:  true,
+		Logger:       helpers.NewTestLogger(t),
 	}
 	config := c.Config()
 
