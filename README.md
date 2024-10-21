@@ -19,11 +19,7 @@ Prerequisites:
 
 Run all tests:
 
-    docker compose run test
-
-Run specific test:
-
-    docker compose run test go test -run=TestRequeue_DLQ_Message_After_Retries
+    ./scripts/docker-run-all-tests.sh
 
 ## Test Harness Application
 

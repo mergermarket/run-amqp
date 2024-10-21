@@ -1,3 +1,8 @@
 .idea/
 .idea/workspace.xml
+.vim
+.vscode
+
 run-amqp.iml
+
+netskope*
