@@ -2,9 +2,10 @@ package runamqp
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/mergermarket/run-amqp/connection"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"sync"
 )
 
 type consumerChannels struct {
@@ -126,7 +127,9 @@ func (c *Consumer) setUpMainExchangeWithQueue(amqpChannel *amqp.Channel) error {
 	}
 
 	args := make(map[string]interface{})
-	args["x-max-priority"] = c.config.queue.MaxPriority
+	if c.config.queue.MaxPriority > 0 {
+		args["x-max-priority"] = c.config.queue.MaxPriority
+	}
 
 	err = assertAndBindQueue(amqpChannel, c.config.queue.Name, c.config.exchange.Name, c.config.queue.Patterns, args)
 
