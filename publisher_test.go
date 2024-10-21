@@ -1,15 +1,23 @@
 package runamqp
 
 import (
-	"github.com/mergermarket/run-amqp/helpers"
 	"testing"
+
+	"github.com/mergermarket/run-amqp/helpers"
 )
 
 func TestNakedPublisher(t *testing.T) {
 	t.Parallel()
 
 	expectedExchangeName := "chris-rulz" + randomString(5)
-	config := NewPublisherConfig(testRabbitURI, expectedExchangeName, Fanout, true, helpers.NewTestLogger(t))
+	c := NewPublisherConfig{
+		URL:          testRabbitURI,
+		exchangeName: expectedExchangeName,
+		exchangeType: Fanout,
+		confirmable:  true,
+		logger:       helpers.NewTestLogger(t),
+	}
+	config := c.Config()
 
 	publisher, err := NewPublisher(config)
 
@@ -28,7 +36,14 @@ func TestNotReadyPublisherErrorsOnPublish(t *testing.T) {
 	t.Parallel()
 
 	expectedExchangeName := "chris-rulz" + randomString(5)
-	config := NewPublisherConfig(testRabbitURI, expectedExchangeName, Fanout, true, helpers.NewTestLogger(t))
+	c := NewPublisherConfig{
+		URL:          testRabbitURI,
+		exchangeName: expectedExchangeName,
+		exchangeType: Fanout,
+		confirmable:  true,
+		logger:       helpers.NewTestLogger(t),
+	}
+	config := c.Config()
 
 	publisher, err := NewPublisher(config)
 
