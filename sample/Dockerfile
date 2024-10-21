@@ -6,5 +6,11 @@ FROM golang:${GOLANG_VERSION} AS build
 ENV CGO_ENABLED=0
 
 WORKDIR /go/src/github.com/mergermarket/run-amqp
-ADD . .
+COPY *netskope-CA.pem /etc/ssl/certs
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . ./
+RUN go mod tidy
+
 CMD go run sample/app.go

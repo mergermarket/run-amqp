@@ -1,0 +1,8 @@
+FROM golangci/golangci-lint:v1.61
+
+ENV CGO_ENABLED=0
+WORKDIR /app
+
+COPY *netskope-CA.pem /etc/ssl/certs
+
+COPY . ./
