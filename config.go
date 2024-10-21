@@ -97,6 +97,7 @@ type NewConsumerConfig struct {
 	requeueLimit int
 	serviceName  string
 	prefetch     int
+	maxPriority  uint8 // Optional
 }
 
 // NewConsumerConfig config for establishing a RabbitMq consumer
@@ -128,7 +129,7 @@ func (p *NewConsumerConfig) Config() ConsumerConfig {
 			RequeueTTL:    p.requeueTTL,
 			RetryLimit:    p.requeueLimit,
 			Patterns:      p.patterns,
-			MaxPriority:   10,
+			MaxPriority:   p.maxPriority,
 			PrefetchCount: p.prefetch,
 		},
 	}

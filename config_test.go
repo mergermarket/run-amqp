@@ -106,6 +106,38 @@ func TestItSetsPatternsOnQueue(t *testing.T) {
 	}
 	consumerConfig := c.Config()
 
+	if consumerConfig.queue.MaxPriority != 0 {
+		t.Error("Expected max priority to be set to 0 got", consumerConfig.queue.MaxPriority)
+	}
+	if len(consumerConfig.queue.Patterns) != 1 {
+		t.Fatal("There should be one pattern set")
+	}
+
+	if consumerConfig.queue.Patterns[0] != pattern {
+		t.Error("Unexpected pattern, expected", pattern, "but got", consumerConfig.queue.Patterns[0])
+	}
+}
+
+func TestItSetsMaxPriority(t *testing.T) {
+	logger := helpers.NewTestLogger(t)
+	pattern := "pretty.pattern"
+	c := NewConsumerConfig{
+		URL:          testRabbitURI,
+		exchangeName: "exchange",
+		exchangeType: Fanout,
+		patterns:     []string{pattern},
+		logger:       logger,
+		requeueTTL:   200,
+		requeueLimit: testRequeueLimit,
+		serviceName:  "service",
+		prefetch:     defaultPrefetch,
+		maxPriority:  7,
+	}
+	consumerConfig := c.Config()
+
+	if consumerConfig.queue.MaxPriority != 7 {
+		t.Error("Expected max priority to be set to 7 got", consumerConfig.queue.MaxPriority)
+	}
 	if len(consumerConfig.queue.Patterns) != 1 {
 		t.Fatal("There should be one pattern set")
 	}
