@@ -2,10 +2,11 @@ package runamqp
 
 import (
 	"fmt"
-	"github.com/mergermarket/run-amqp/helpers"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/mergermarket/run-amqp/helpers"
 )
 
 var (
@@ -466,17 +467,19 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 		config.ServiceName = serviceName
 	}
 
-	return NewConsumerConfig(
-		"amqp://guest:guest@rabbitmq:5672/",
-		config.ExchangeName,
-		config.ExchangeType,
-		config.Patterns,
-		logger,
-		config.RequeueTTL,
-		config.Retries,
-		config.ServiceName,
-		defaultPrefetch,
-	)
+	c :=
+		NewConsumerConfig{
+			URL:          "amqp://guest:guest@rabbitmq:5672/",
+			exchangeName: config.ExchangeName,
+			exchangeType: config.ExchangeType,
+			patterns:     config.Patterns,
+			logger:       logger,
+			requeueTTL:   config.RequeueTTL,
+			requeueLimit: config.Retries,
+			serviceName:  config.ServiceName,
+			prefetch:     defaultPrefetch,
+		}
+	return c.Config()
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

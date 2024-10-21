@@ -28,18 +28,19 @@ func (e *ExampleHandler) Name() string {
 
 func ExampleConsumer() {
 
+	c := NewConsumerConfig{
+		URL:          testRabbitURI,
+		exchangeName: "test-example-exchange",
+		exchangeType: Fanout,
+		patterns:     noPatterns,
+		logger:       &SimpleLogger{io.Discard},
+		requeueTTL:   testRequeueTTL,
+		requeueLimit: testRequeueLimit,
+		serviceName:  serviceName,
+		prefetch:     defaultPrefetch,
+	}
 	// Create a consumer config
-	config := NewConsumerConfig(
-		testRabbitURI,
-		"test-example-exchange",
-		Fanout,
-		noPatterns,
-		&SimpleLogger{io.Discard},
-		testRequeueTTL,
-		testRequeueLimit,
-		serviceName,
-		defaultPrefetch,
-	)
+	config := c.Config()
 
 	// Create a consumer, which holds the references to the channel of Messages
 	consumer := NewConsumer(config)
@@ -59,7 +60,14 @@ func ExampleConsumer() {
 	consumer.Process(handler, numberOfWorkers)
 
 	// We can now publish to the same exchange for fun
-	publisherConfig := NewPublisherConfig(config.URL, config.exchange.Name, config.exchange.Type, false, config.Logger)
+	pc := NewPublisherConfig{
+		URL:          config.URL,
+		exchangeName: config.exchange.Name,
+		exchangeType: config.exchange.Type,
+		confirmable:  false,
+		logger:       config.Logger,
+	}
+	publisherConfig := pc.Config()
 	publisher, err := NewPublisher(publisherConfig)
 
 	// Let's check the Publisher is ready too

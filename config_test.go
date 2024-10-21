@@ -1,8 +1,9 @@
 package runamqp
 
 import (
-	"github.com/mergermarket/run-amqp/helpers"
 	"testing"
+
+	"github.com/mergermarket/run-amqp/helpers"
 )
 
 const defaultPrefetch = 10
@@ -11,17 +12,18 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 
 	logger := helpers.NewTestLogger(t)
 
-	consumerConfig := NewConsumerConfig(
-		testRabbitURI,
-		"producer-stuff",
-		Fanout,
-		noPatterns,
-		logger,
-		200,
-		testRequeueLimit,
-		"service",
-		defaultPrefetch,
-	)
+	c := NewConsumerConfig{
+		URL:          testRabbitURI,
+		exchangeName: "producer-stuff",
+		exchangeType: Fanout,
+		patterns:     noPatterns,
+		logger:       logger,
+		requeueTTL:   200,
+		requeueLimit: testRequeueLimit,
+		serviceName:  "service",
+		prefetch:     defaultPrefetch,
+	}
+	consumerConfig := c.Config()
 
 	expectedQueueName := "producer-stuff-for-service"
 
@@ -66,17 +68,18 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 	logger := helpers.NewTestLogger(t)
 
-	consumerConfig := NewConsumerConfig(
-		testRabbitURI,
-		"exchange",
-		Fanout,
-		noPatterns,
-		logger,
-		200,
-		testRequeueLimit,
-		"service",
-		defaultPrefetch,
-	)
+	c := NewConsumerConfig{
+		URL:          testRabbitURI,
+		exchangeName: "exchange",
+		exchangeType: Fanout,
+		patterns:     noPatterns,
+		logger:       logger,
+		requeueTTL:   200,
+		requeueLimit: testRequeueLimit,
+		serviceName:  "service",
+		prefetch:     defaultPrefetch,
+	}
+	consumerConfig := c.Config()
 
 	if len(consumerConfig.queue.Patterns) != 1 {
 		t.Fatal("When there are no patterns supplied it should've put one in")
@@ -90,17 +93,18 @@ func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 func TestItSetsPatternsOnQueue(t *testing.T) {
 	logger := helpers.NewTestLogger(t)
 	pattern := "pretty.pattern"
-	consumerConfig := NewConsumerConfig(
-		testRabbitURI,
-		"exchange",
-		Fanout,
-		[]string{pattern},
-		logger,
-		200,
-		testRequeueLimit,
-		"service",
-		defaultPrefetch,
-	)
+	c := NewConsumerConfig{
+		URL:          testRabbitURI,
+		exchangeName: "exchange",
+		exchangeType: Fanout,
+		patterns:     []string{pattern},
+		logger:       logger,
+		requeueTTL:   200,
+		requeueLimit: testRequeueLimit,
+		serviceName:  "service",
+		prefetch:     defaultPrefetch,
+	}
+	consumerConfig := c.Config()
 
 	if len(consumerConfig.queue.Patterns) != 1 {
 		t.Fatal("There should be one pattern set")
