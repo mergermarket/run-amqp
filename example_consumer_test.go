@@ -30,14 +30,14 @@ func ExampleConsumer() {
 
 	c := NewConsumerConfig{
 		URL:          testRabbitURI,
-		exchangeName: "test-example-exchange",
-		exchangeType: Fanout,
-		patterns:     noPatterns,
-		logger:       &SimpleLogger{io.Discard},
-		requeueTTL:   testRequeueTTL,
-		requeueLimit: testRequeueLimit,
-		serviceName:  serviceName,
-		prefetch:     defaultPrefetch,
+		ExchangeName: "test-example-exchange",
+		ExchangeType: Fanout,
+		Patterns:     noPatterns,
+		Logger:       &SimpleLogger{io.Discard},
+		RequeueTTL:   testRequeueTTL,
+		RequeueLimit: testRequeueLimit,
+		ServiceName:  serviceName,
+		Prefetch:     defaultPrefetch,
 	}
 	// Create a consumer config
 	config := c.Config()
@@ -62,10 +62,10 @@ func ExampleConsumer() {
 	// We can now publish to the same exchange for fun
 	pc := NewPublisherConfig{
 		URL:          config.URL,
-		exchangeName: config.exchange.Name,
-		exchangeType: config.exchange.Type,
-		confirmable:  false,
-		logger:       config.Logger,
+		ExchangeName: config.exchange.Name,
+		ExchangeType: config.exchange.Type,
+		Confirmable:  false,
+		Logger:       config.Logger,
 	}
 	publisherConfig := pc.Config()
 	publisher, err := NewPublisher(publisherConfig)

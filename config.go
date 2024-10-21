@@ -53,20 +53,20 @@ type ConsumerConfig struct {
 }
 type NewPublisherConfig struct {
 	URL          string
-	exchangeName string
-	exchangeType ExchangeType
-	confirmable  bool
-	logger       logger
+	ExchangeName string
+	ExchangeType ExchangeType
+	Confirmable  bool
+	Logger       logger
 }
 
 // NewPublisherConfig returns a PublisherConfig derived from the consumer config. This config can be used to create a Publisher to Publish to this consumer
 func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
 	nc := NewPublisherConfig{
 		URL:          c.URL,
-		exchangeName: c.exchange.Name,
-		exchangeType: c.exchange.Type,
-		confirmable:  false,
-		logger:       c.Logger,
+		ExchangeName: c.exchange.Name,
+		ExchangeType: c.exchange.Type,
+		Confirmable:  false,
+		Logger:       c.Logger,
 	}
 	return nc.Config()
 }
@@ -75,62 +75,62 @@ func (c ConsumerConfig) NewPublisherConfig() PublisherConfig {
 func (p *NewPublisherConfig) Config() PublisherConfig {
 
 	return PublisherConfig{
-		confirmable: p.confirmable,
+		confirmable: p.Confirmable,
 		connectionConfig: connectionConfig{
 			URL:    p.URL,
-			Logger: p.logger,
+			Logger: p.Logger,
 		},
 		exchange: exchange{
-			Name: p.exchangeName,
-			Type: p.exchangeType,
+			Name: p.ExchangeName,
+			Type: p.ExchangeType,
 		},
 	}
 }
 
 type NewConsumerConfig struct {
 	URL          string
-	exchangeName string
-	exchangeType ExchangeType
-	patterns     []string
-	logger       logger
-	requeueTTL   int16
-	requeueLimit int
-	serviceName  string
-	prefetch     int
-	maxPriority  uint8 // Optional
+	ExchangeName string
+	ExchangeType ExchangeType
+	Patterns     []string
+	Logger       logger
+	RequeueTTL   int16
+	RequeueLimit int
+	ServiceName  string
+	Prefetch     int
+	MaxPriority  uint8 // Optional
 }
 
 // NewConsumerConfig config for establishing a RabbitMq consumer
 func (p *NewConsumerConfig) Config() ConsumerConfig {
 
-	if len(p.patterns) == 0 {
-		p.logger.Info("Executive decision made! You did not supply a pattern so we have added a default of '#'")
-		p.patterns = append(p.patterns, "#") //testme
+	if len(p.Patterns) == 0 {
+		p.Logger.Info("Executive decision made! You did not supply a pattern so we have added a default of '#'")
+		p.Patterns = append(p.Patterns, "#") //testme
 	}
 
-	queueName := fmt.Sprintf("%s-for-%s", p.exchangeName, p.serviceName)
+	queueName := fmt.Sprintf("%s-for-%s", p.ExchangeName, p.ServiceName)
 
 	return ConsumerConfig{
 		connectionConfig: connectionConfig{
 			URL:    p.URL,
-			Logger: p.logger,
+			Logger: p.Logger,
 		},
 		exchange: exchange{
-			Name:       p.exchangeName,
-			RetryNow:   fmt.Sprintf("%s-for-%s-retry-now", p.exchangeName, p.serviceName),
-			RetryLater: fmt.Sprintf("%s-for-%s-retry-%dms-later", p.exchangeName, p.serviceName, p.requeueTTL),
-			DLE:        fmt.Sprintf("%s-for-%s-dle", p.exchangeName, p.serviceName),
-			Type:       p.exchangeType,
+			Name:       p.ExchangeName,
+			RetryNow:   fmt.Sprintf("%s-for-%s-retry-now", p.ExchangeName, p.ServiceName),
+			RetryLater: fmt.Sprintf("%s-for-%s-retry-%dms-later", p.ExchangeName, p.ServiceName, p.RequeueTTL),
+			DLE:        fmt.Sprintf("%s-for-%s-dle", p.ExchangeName, p.ServiceName),
+			Type:       p.ExchangeType,
 		},
 		queue: queue{
 			Name:          queueName,
 			DLQ:           queueName + "-dlq",
-			RetryLater:    fmt.Sprintf("%s-retry-%dms-later", queueName, p.requeueTTL),
-			RequeueTTL:    p.requeueTTL,
-			RetryLimit:    p.requeueLimit,
-			Patterns:      p.patterns,
-			MaxPriority:   p.maxPriority,
-			PrefetchCount: p.prefetch,
+			RetryLater:    fmt.Sprintf("%s-retry-%dms-later", queueName, p.RequeueTTL),
+			RequeueTTL:    p.RequeueTTL,
+			RetryLimit:    p.RequeueLimit,
+			Patterns:      p.Patterns,
+			MaxPriority:   p.MaxPriority,
+			PrefetchCount: p.Prefetch,
 		},
 	}
 }

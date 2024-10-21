@@ -14,14 +14,14 @@ func TestItDerivesConsumerExchanges(t *testing.T) {
 
 	c := NewConsumerConfig{
 		URL:          testRabbitURI,
-		exchangeName: "producer-stuff",
-		exchangeType: Fanout,
-		patterns:     noPatterns,
-		logger:       logger,
-		requeueTTL:   200,
-		requeueLimit: testRequeueLimit,
-		serviceName:  "service",
-		prefetch:     defaultPrefetch,
+		ExchangeName: "producer-stuff",
+		ExchangeType: Fanout,
+		Patterns:     noPatterns,
+		Logger:       logger,
+		RequeueTTL:   200,
+		RequeueLimit: testRequeueLimit,
+		ServiceName:  "service",
+		Prefetch:     defaultPrefetch,
 	}
 	consumerConfig := c.Config()
 
@@ -70,14 +70,14 @@ func TestItSetsPatternToHashWhenNoneSupplied(t *testing.T) {
 
 	c := NewConsumerConfig{
 		URL:          testRabbitURI,
-		exchangeName: "exchange",
-		exchangeType: Fanout,
-		patterns:     noPatterns,
-		logger:       logger,
-		requeueTTL:   200,
-		requeueLimit: testRequeueLimit,
-		serviceName:  "service",
-		prefetch:     defaultPrefetch,
+		ExchangeName: "exchange",
+		ExchangeType: Fanout,
+		Patterns:     noPatterns,
+		Logger:       logger,
+		RequeueTTL:   200,
+		RequeueLimit: testRequeueLimit,
+		ServiceName:  "service",
+		Prefetch:     defaultPrefetch,
 	}
 	consumerConfig := c.Config()
 
@@ -95,14 +95,14 @@ func TestItSetsPatternsOnQueue(t *testing.T) {
 	pattern := "pretty.pattern"
 	c := NewConsumerConfig{
 		URL:          testRabbitURI,
-		exchangeName: "exchange",
-		exchangeType: Fanout,
-		patterns:     []string{pattern},
-		logger:       logger,
-		requeueTTL:   200,
-		requeueLimit: testRequeueLimit,
-		serviceName:  "service",
-		prefetch:     defaultPrefetch,
+		ExchangeName: "exchange",
+		ExchangeType: Fanout,
+		Patterns:     []string{pattern},
+		Logger:       logger,
+		RequeueTTL:   200,
+		RequeueLimit: testRequeueLimit,
+		ServiceName:  "service",
+		Prefetch:     defaultPrefetch,
 	}
 	consumerConfig := c.Config()
 
@@ -123,15 +123,15 @@ func TestItSetsMaxPriority(t *testing.T) {
 	pattern := "pretty.pattern"
 	c := NewConsumerConfig{
 		URL:          testRabbitURI,
-		exchangeName: "exchange",
-		exchangeType: Fanout,
-		patterns:     []string{pattern},
-		logger:       logger,
-		requeueTTL:   200,
-		requeueLimit: testRequeueLimit,
-		serviceName:  "service",
-		prefetch:     defaultPrefetch,
-		maxPriority:  7,
+		ExchangeName: "exchange",
+		ExchangeType: Fanout,
+		Patterns:     []string{pattern},
+		Logger:       logger,
+		RequeueTTL:   200,
+		RequeueLimit: testRequeueLimit,
+		ServiceName:  "service",
+		Prefetch:     defaultPrefetch,
+		MaxPriority:  7,
 	}
 	consumerConfig := c.Config()
 

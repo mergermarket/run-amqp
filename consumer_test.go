@@ -470,14 +470,14 @@ func newTestConsumerConfig(t *testing.T, config consumerConfigOptions) ConsumerC
 	c :=
 		NewConsumerConfig{
 			URL:          "amqp://guest:guest@rabbitmq:5672/",
-			exchangeName: config.ExchangeName,
-			exchangeType: config.ExchangeType,
-			patterns:     config.Patterns,
-			logger:       logger,
-			requeueTTL:   config.RequeueTTL,
-			requeueLimit: config.Retries,
-			serviceName:  config.ServiceName,
-			prefetch:     defaultPrefetch,
+			ExchangeName: config.ExchangeName,
+			ExchangeType: config.ExchangeType,
+			Patterns:     config.Patterns,
+			Logger:       logger,
+			RequeueTTL:   config.RequeueTTL,
+			RequeueLimit: config.Retries,
+			ServiceName:  config.ServiceName,
+			Prefetch:     defaultPrefetch,
 		}
 	return c.Config()
 }
