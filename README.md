@@ -19,17 +19,23 @@ Prerequisites:
 
 Run all tests:
 
+    ```sh
     ./scripts/docker-run-all-tests.sh
+    ```
 
 ## Test Harness Application
 
 A test harness app exists in `/sample/` so you can play around with it a bit:
 
+    ```sh
     docker compose run --service-ports sampleapp
+    ```
 
 View the test harness app at `<URL>/entry`
 
+    ```sh
     http://localhost:8080/entry
+    ```
 
 ## Usage
 
